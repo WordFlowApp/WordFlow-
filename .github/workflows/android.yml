@@ -22,8 +22,8 @@ jobs:
 
       - name: Preparar proyecto
         run: |
-          if [ -f WordFlow_Piloto.zip ]; then
-            unzip -o WordFlow_Piloto.zip -d .
+          if [ -f WordFlow_Piloto_con_icono.zip ]; then
+            unzip -o WordFlow_Piloto_con_icono.zip -d .
           fi
 
       - name: Compilar WordFlow
