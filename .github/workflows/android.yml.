@@ -1,0 +1,39 @@
+name: WordFlow Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Preparar proyecto
+        run: |
+          if [ -f WordFlow_Piloto.zip ]; then
+            unzip -o WordFlow_Piloto.zip -d .
+          fi
+
+      - name: Compilar WordFlow
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: '8.9'
+          arguments: assembleDebug
+
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: WordFlow-APK
+          path: app/build/outputs/apk/debug/*.apk
