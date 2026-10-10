@@ -6,9 +6,14 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    name: Compilar WordFlow
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Descargar codigo
@@ -21,19 +26,48 @@ jobs:
           java-version: '17'
 
       - name: Preparar proyecto
+        shell: bash
         run: |
           if [ -f WordFlow_Piloto_con_icono.zip ]; then
             unzip -o WordFlow_Piloto_con_icono.zip -d .
           fi
 
-      - name: Compilar WordFlow
+          if [ ! -f settings.gradle ] && [ ! -f settings.gradle.kts ]; then
+            echo "ERROR: No se encontro settings.gradle"
+            exit 1
+          fi
+
+          if [ ! -d app ]; then
+            echo "ERROR: No se encontro la carpeta app"
+            exit 1
+          fi
+
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Compilar APK
         uses: gradle/gradle-build-action@v3
         with:
           gradle-version: '8.9'
           arguments: assembleDebug
 
+      - name: Verificar APK
+        shell: bash
+        run: |
+          find . -type f -path "*/build/outputs/apk/debug/*.apk" \
+            -print -quit > apk_path.txt
+
+          if [ ! -s apk_path.txt ]; then
+            echo "ERROR: No se genero ningun APK"
+            exit 1
+          fi
+
+          cat apk_path.txt
+
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
           name: WordFlow-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: ${{ github.workspace }}/**/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
