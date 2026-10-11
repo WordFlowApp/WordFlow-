@@ -1,19 +1,16 @@
-WordFlow — Traductor flotante para Android
+# WordFlow — prototipo Android
 
-Traductor flotante gratis de norteamericano a argentino y de argentino a norteamericano.
+Primera versión de prueba de un traductor inglés → español con ventana flotante.
 
-Qué hace
+## Qué hace
+- Permite escribir una palabra o frase corta en inglés y pedir su traducción al español.
+- Puede mostrar una ventana flotante sobre otras aplicaciones después de conceder el permiso Android.
+- Diseño inicial azul inspirado en el icono WordFlow.
 
-- Permite escribir palabras o frases cortas para traducir entre norteamericano y argentino.
-- Puede mostrar una ventana flotante sobre otras aplicaciones después de conceder el permiso correspondiente de Android.
-- Tiene un diseño azul inspirado en el logo de WordFlow.
+## Limitaciones de esta primera versión
+- No lee automáticamente los subtítulos de YouTube; la palabra se escribe manualmente.
+- La traducción utiliza el servicio público MyMemory y requiere internet.
+- Es un prototipo para pruebas, no una versión final publicada en una tienda.
 
-Limitaciones de esta primera versión
-
-- No lee automáticamente los subtítulos de YouTube; las palabras o frases se escriben manualmente.
-- La traducción requiere conexión a internet.
-- Es un prototipo de prueba, todavía no una versión final publicada en una tienda.
-
-Compilar
-
-GitHub Actions permite compilar el archivo APK al subir cambios a la rama "main" o ejecutar manualmente el proceso desde Actions.
+## Compilar
+El workflow de GitHub Actions compila `app-debug.apk` al subir cambios a `main` o al ejecutarlo manualmente desde Actions.
