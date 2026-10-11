@@ -28,19 +28,55 @@ jobs:
       - name: Preparar proyecto
         shell: bash
         run: |
-          if [ -f WordFlow_Piloto_con_icono.zip ]; then
-            unzip -o WordFlow_Piloto_con_icono.zip -d .
-          fi
+          set -e
 
-          if [ ! -f settings.gradle ] && [ ! -f settings.gradle.kts ]; then
-            echo "ERROR: No se encontro settings.gradle"
+          ZIP="WordFlow_Piloto_UNIFICADO_v2_con_presentacion.zip"
+
+          if [ ! -f "$ZIP" ]; then
+            echo "ERROR: No se encontro el proyecto nuevo: $ZIP"
+            echo "Archivos ZIP disponibles:"
+            find . -maxdepth 2 -type f -name "*.zip"
             exit 1
           fi
 
-          if [ ! -d app ]; then
-            echo "ERROR: No se encontro la carpeta app"
+          unzip -o "$ZIP" -d proyecto_nuevo
+
+          ROOT="proyecto_nuevo"
+
+          if [ -d "$ROOT/app" ]; then
+            PROJECT="$ROOT"
+          elif [ -d "$ROOT/WordFlow_Piloto_UNIFICADO_v2_con_presentacion/app" ]; then
+            PROJECT="$ROOT/WordFlow_Piloto_UNIFICADO_v2_con_presentacion"
+          else
+            PROJECT=$(find "$ROOT" -type f -name settings.gradle \
+              -printf '%h\n' | head -n 1)
+
+            if [ -z "$PROJECT" ] || [ ! -d "$PROJECT/app" ]; then
+              echo "ERROR: No se encontro la estructura Android completa"
+              find "$ROOT" -maxdepth 4 -type d
+              exit 1
+            fi
+          fi
+
+          echo "Proyecto seleccionado: $PROJECT"
+
+          if [ ! -f "$PROJECT/settings.gradle" ] && \
+             [ ! -f "$PROJECT/settings.gradle.kts" ]; then
+            echo "ERROR: Falta settings.gradle"
             exit 1
           fi
+
+          if [ ! -f "$PROJECT/app/src/main/java/com/wordflow/app/OverlayService.java" ]; then
+            echo "ERROR: No se encontro OverlayService.java en la ruta esperada"
+            exit 1
+          fi
+
+          if [ ! -f "$PROJECT/app/src/main/java/com/wordflow/app/MainActivity.java" ]; then
+            echo "ERROR: No se encontro MainActivity.java en la ruta esperada"
+            exit 1
+          fi
+
+          cp -a "$PROJECT/." .
 
       - name: Preparar Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -54,7 +90,8 @@ jobs:
       - name: Verificar APK
         shell: bash
         run: |
-          find . -type f -path "*/build/outputs/apk/debug/*.apk" \
+          set -e
+          find app/build/outputs/apk/debug -type f -name "*.apk" \
             -print -quit > apk_path.txt
 
           if [ ! -s apk_path.txt ]; then
@@ -62,12 +99,13 @@ jobs:
             exit 1
           fi
 
+          echo "APK generado:"
           cat apk_path.txt
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
           name: WordFlow-APK
-          path: ${{ github.workspace }}/**/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 7
