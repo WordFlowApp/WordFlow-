@@ -1,4 +1,3 @@
-
 name: WordFlow Android APK
 
 on:
@@ -30,11 +29,10 @@ jobs:
         shell: bash
         run: |
           set -e
-          echo "Verificando proyecto WordFlow..."
-          test -f settings.gradle -o -f settings.gradle.kts
-          test -f app/build.gradle -o -f app/build.gradle.kts
-          test -f app/src/main/java/com/wordflow/app/OverlayService.java
-          test -f app/src/main/java/com/wordflow/app/MainActivity.java
+          echo "Archivos disponibles en la raiz:"
+          ls -la
+          echo "Buscando archivos Java y manifiesto:"
+          find . -type f \( -name "MainActivity.java" -o -name "OverlayService.java" -o -name "AndroidManifest.xml" \)
 
       - name: Preparar Gradle
         uses: gradle/actions/setup-gradle@v4
