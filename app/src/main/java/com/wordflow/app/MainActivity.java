@@ -1,112 +1,111 @@
-
 package com.wordflow.app;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.widget.ScrollView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
-    private int dp(float n) {
-        return (int) (n * getResources().getDisplayMetrics().density + 0.5f);
+    private int dp(float value) {
+        return (int) (value * getResources()
+                .getDisplayMetrics().density + 0.5f);
     }
 
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
 
+        getWindow().setStatusBarColor(Color.rgb(3, 14, 45));
+        getWindow().setNavigationBarColor(Color.rgb(3, 14, 45));
+
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setGravity(Gravity.CENTER_HORIZONTAL);
-        root.setPadding(dp(24), dp(32), dp(24), dp(24));
-        root.setBackgroundColor(Color.rgb(5, 20, 55));
+        root.setGravity(Gravity.CENTER);
+        root.setBackgroundColor(Color.rgb(3, 14, 45));
 
-        TextView title = new TextView(this);
-        title.setText("Word");
-        title.setTextColor(Color.WHITE);
-        title.setTextSize(42);
-        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        title.setGravity(Gravity.CENTER);
-        root.addView(title, new LinearLayout.LayoutParams(-1, -2));
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
 
-        TextView flow = new TextView(this);
-        flow.setText("Flow");
-        flow.setTextColor(Color.rgb(0, 220, 255));
-        flow.setTextSize(52);
-        flow.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        flow.setGravity(Gravity.CENTER);
-        root.addView(flow, new LinearLayout.LayoutParams(-1, -2));
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setGravity(Gravity.CENTER_HORIZONTAL);
+        content.setPadding(dp(12), dp(12), dp(12), dp(18));
 
-        TextView flags = new TextView(this);
-        flags.setText("🇺🇸   ⇄   🇦🇷");
-        flags.setTextSize(34);
-        flags.setGravity(Gravity.CENTER);
-        flags.setPadding(0, dp(16), 0, dp(22));
-        root.addView(flags, new LinearLayout.LayoutParams(-1, -2));
-
-        TextView intro = new TextView(this);
-        intro.setText(
-            "Argentina para el mundo y el mundo para Argentina.\n\n" +
-            "Aprendé a comprender el idioma natural argentino " +
-            "y a comunicarte con el mundo."
+        ImageView welcome = new ImageView(this);
+        welcome.setImageResource(R.drawable.wordflow_welcome);
+        welcome.setAdjustViewBounds(true);
+        welcome.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        content.addView(
+                welcome,
+                new LinearLayout.LayoutParams(
+                        -1, -2
+                )
         );
-        intro.setTextColor(Color.WHITE);
-        intro.setTextSize(18);
-        intro.setGravity(Gravity.CENTER);
-        intro.setPadding(0, 0, 0, dp(24));
-        root.addView(intro, new LinearLayout.LayoutParams(-1, -2));
 
-        Button test = new Button(this);
-        test.setText("PROBAR TRADUCTOR");
-        root.addView(test, new LinearLayout.LayoutParams(-1, -2));
+        Button startButton = new Button(this);
+        startButton.setText("COMENZAR A USAR WORDFLOW  →");
+        startButton.setTextColor(Color.rgb(5, 20, 55));
+        startButton.setTextSize(16);
+        startButton.setAllCaps(false);
+        startButton.setTypeface(null, android.graphics.Typeface.BOLD);
 
-        test.setOnClickListener(v -> {
-            if (Settings.canDrawOverlays(this)) {
-                try {
-                    Intent intent = new Intent(this, OverlayService.class);
-                    startForegroundService(intent);
-                } catch (Exception e) {
-                    Toast.makeText(
-                        this,
-                        "No se pudo iniciar WordFlow. Intentá nuevamente.",
-                        Toast.LENGTH_LONG
-                    ).show();
-                }
-            } else {
-                Intent permissionIntent = new Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName())
-                );
-                startActivity(permissionIntent);
+        GradientDrawable buttonBackground = new GradientDrawable();
+        buttonBackground.setColor(Color.rgb(255, 220, 0));
+        buttonBackground.setCornerRadius(dp(24));
+        startButton.setBackground(buttonBackground);
+        startButton.setPadding(dp(12), dp(12), dp(12), dp(12));
 
-                Toast.makeText(
-                    this,
-                    "Activá Mostrar sobre otras aplicaciones y volvé a WordFlow.",
-                    Toast.LENGTH_LONG
-                ).show();
-            }
-        });
+        LinearLayout.LayoutParams buttonParams =
+                new LinearLayout.LayoutParams(-1, -2);
+        buttonParams.setMargins(dp(8), dp(14), dp(8), dp(8));
+        content.addView(startButton, buttonParams);
 
-        TextView note = new TextView(this);
-        note.setText(
-            "\nPrimera versión de prueba\n" +
-            "La traducción necesita conexión a internet."
+        startButton.setOnClickListener(v -> startTranslator());
+
+        scroll.addView(content);
+        root.addView(
+                scroll,
+                new LinearLayout.LayoutParams(-1, 0, 1)
         );
-        note.setTextColor(Color.LTGRAY);
-        note.setTextSize(14);
-        note.setGravity(Gravity.CENTER);
-        root.addView(note, new LinearLayout.LayoutParams(-1, -2));
 
         setContentView(root);
     }
-          }
-  
+
+    private void startTranslator() {
+        if (Settings.canDrawOverlays(this)) {
+            try {
+                Intent intent = new Intent(this, OverlayService.class);
+                startForegroundService(intent);
+            } catch (Exception e) {
+                Toast.makeText(
+                        this,
+                        "No se pudo iniciar WordFlow. Intentá nuevamente.",
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+        } else {
+            Intent permissionIntent = new Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName())
+            );
+            startActivity(permissionIntent);
+
+            Toast.makeText(
+                    this,
+                    "Activá Mostrar sobre otras aplicaciones y volvé a WordFlow.",
+                    Toast.LENGTH_LONG
+            ).show();
+        }
+    }
+            }
