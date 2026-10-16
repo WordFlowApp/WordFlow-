@@ -1,111 +1,67 @@
 name: WordFlow Android APK
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
+workflow_dispatch:
+push:
+branches:
+- main
 
 permissions:
-  contents: read
+contents: read
 
 jobs:
-  build:
-    name: Compilar WordFlow
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+build:
+name: Compilar WordFlow
+runs-on: ubuntu-latest
+timeout-minutes: 30
 
-    steps:
-      - name: Descargar codigo
-        uses: actions/checkout@v4
+steps:
+  - name: Descargar codigo
+    uses: actions/checkout@v4
 
-      - name: Configurar Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+  - name: Configurar Java
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '17'
 
-      - name: Preparar proyecto
-        shell: bash
-        run: |
-          set -e
+  - name: Verificar proyecto
+    shell: bash
+    run: |
+      set -e
+      echo "Verificando proyecto WordFlow del repositorio..."
+      test -f settings.gradle -o -f settings.gradle.kts
+      test -f app/build.gradle -o -f app/build.gradle.kts
+      test -f app/src/main/java/com/wordflow/app/OverlayService.java
+      test -f app/src/main/java/com/wordflow/app/MainActivity.java
+      echo "Se compilara el codigo que esta directamente en el repositorio."
 
-          ZIP="WordFlow_Piloto_UNIFICADO_v2_con_presentacion.zip"
+  - name: Preparar Gradle
+    uses: gradle/actions/setup-gradle@v4
 
-          if [ ! -f "$ZIP" ]; then
-            echo "ERROR: No se encontro el proyecto nuevo: $ZIP"
-            echo "Archivos ZIP disponibles:"
-            find . -maxdepth 2 -type f -name "*.zip"
-            exit 1
-          fi
+  - name: Compilar APK
+    uses: gradle/gradle-build-action@v3
+    with:
+      gradle-version: '8.9'
+      arguments: assembleDebug
 
-          unzip -o "$ZIP" -d proyecto_nuevo
+  - name: Verificar APK
+    shell: bash
+    run: |
+      set -e
+      APK="app/build/outputs/apk/debug/app-debug.apk"
+      if [ ! -f "$APK" ]; then
+        echo "ERROR: No se genero el APK esperado."
+        find app/build/outputs/apk -type f -name "*.apk" || true
+        exit 1
+      fi
+      echo "APK generado correctamente: $APK"
+      sha256sum "$APK"
 
-          ROOT="proyecto_nuevo"
-
-          if [ -d "$ROOT/app" ]; then
-            PROJECT="$ROOT"
-          elif [ -d "$ROOT/WordFlow_Piloto_UNIFICADO_v2_con_presentacion/app" ]; then
-            PROJECT="$ROOT/WordFlow_Piloto_UNIFICADO_v2_con_presentacion"
-          else
-            PROJECT=$(find "$ROOT" -type f -name settings.gradle \
-              -printf '%h\n' | head -n 1)
-
-            if [ -z "$PROJECT" ] || [ ! -d "$PROJECT/app" ]; then
-              echo "ERROR: No se encontro la estructura Android completa"
-              find "$ROOT" -maxdepth 4 -type d
-              exit 1
-            fi
-          fi
-
-          echo "Proyecto seleccionado: $PROJECT"
-
-          if [ ! -f "$PROJECT/settings.gradle" ] && \
-             [ ! -f "$PROJECT/settings.gradle.kts" ]; then
-            echo "ERROR: Falta settings.gradle"
-            exit 1
-          fi
-
-          if [ ! -f "$PROJECT/app/src/main/java/com/wordflow/app/OverlayService.java" ]; then
-            echo "ERROR: No se encontro OverlayService.java en la ruta esperada"
-            exit 1
-          fi
-
-          if [ ! -f "$PROJECT/app/src/main/java/com/wordflow/app/MainActivity.java" ]; then
-            echo "ERROR: No se encontro MainActivity.java en la ruta esperada"
-            exit 1
-          fi
-
-          cp -a "$PROJECT/." .
-
-      - name: Preparar Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Compilar APK
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-version: '8.9'
-          arguments: assembleDebug
-
-      - name: Verificar APK
-        shell: bash
-        run: |
-          set -e
-          find app/build/outputs/apk/debug -type f -name "*.apk" \
-            -print -quit > apk_path.txt
-
-          if [ ! -s apk_path.txt ]; then
-            echo "ERROR: No se genero ningun APK"
-            exit 1
-          fi
-
-          echo "APK generado:"
-          cat apk_path.txt
-
-      - name: Guardar APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: WordFlow-APK
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
-          retention-days: 7
+  - name: Guardar APK
+    uses: actions/upload-artifact@v4
+    with:
+      name: WordFlow-APK
+      path: app/build/outputs/apk/debug/*.apk
+      if-no-files-found: error
+      retention-days: 7
