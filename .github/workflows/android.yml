@@ -34,29 +34,24 @@ jobs:
           gradle-version: '8.9'
           arguments: assembleDebug --stacktrace
 
-      - name: Diagnosticar APK y clases
+      - name: Verificar APK y codigo
         shell: bash
         run: |
-          echo '=== ARCHIVOS APK ==='
-          find app/build/outputs -type f -name '*.apk' -exec ls -lh {} \; || true
-          echo '=== ARCHIVOS DEX ==='
-          find app/build -type f -name 'classes*.dex' -exec ls -lh {} \; || true
-          echo '=== CLASES JAVA COMPILADAS ==='
-          find app/build -type f -name '*.class' | head -40
-          echo '=== CONTENIDO DEL APK ==='
+          set -e
           APK='app/build/outputs/apk/debug/app-debug.apk'
           if [ ! -f "$APK" ]; then
             echo 'ERROR: No se encontro el APK.'
+            find app/build/outputs -type f || true
             exit 1
           fi
-          stat -c 'Tamano del APK: %s bytes' "$APK"
-          unzip -l "$APK"
+          echo '=== TAMANO DEL APK ==='
+          stat -c '%s bytes' "$APK"
+          echo '=== VERIFICAR ARCHIVO ==='
           unzip -t "$APK"
-          SIZE=$(stat -c%s "$APK")
-          if [ "$SIZE" -lt 100000 ]; then
-            echo 'DIAGNOSTICO: APK demasiado pequeno; revisar archivos DEX y clases compiladas.'
-            exit 1
-          fi
+          echo '=== VERIFICAR CODIGO DEX ==='
+          unzip -l "$APK" | grep -E 'classes[0-9]*\.dex'
+          unzip -Z1 "$APK" | grep -Eq '^classes([0-9]+)?\.dex$'
+          echo 'Verificacion del APK completada.'
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
