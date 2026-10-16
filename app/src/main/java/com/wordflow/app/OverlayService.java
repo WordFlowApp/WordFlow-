@@ -56,17 +56,13 @@ public class OverlayService extends Service {
 
     private final ExecutorService worker =
             Executors.newSingleThreadExecutor();
-
-    private final Handler handler =
-            new Handler(Looper.getMainLooper());
+    private final Handler handler = new Handler(Looper.getMainLooper());
 
     private TextToSpeech textToSpeech;
     private boolean ttsReady = false;
 
     private int dp(float n) {
-        return (int) (
-                n * getResources().getDisplayMetrics().density + 0.5f
-        );
+        return (int) (n * getResources().getDisplayMetrics().density + 0.5f);
     }
 
     @Override
@@ -79,17 +75,13 @@ public class OverlayService extends Service {
         }
 
         createNotification();
-
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
 
-        textToSpeech = new TextToSpeech(
-                getApplicationContext(),
-                status -> {
-                    if (status == TextToSpeech.SUCCESS) {
-                        ttsReady = true;
-                    }
-                }
-        );
+        textToSpeech = new TextToSpeech(getApplicationContext(), status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                ttsReady = true;
+            }
+        });
 
         showPanel();
     }
@@ -105,10 +97,7 @@ public class OverlayService extends Service {
             );
 
             NotificationManager manager =
-                    (NotificationManager) getSystemService(
-                            NOTIFICATION_SERVICE
-                    );
-
+                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             manager.createNotificationChannel(c);
         }
 
@@ -170,34 +159,21 @@ public class OverlayService extends Service {
 
         TextView title = text("WordFlow", 20, Color.CYAN);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
-
-        // Solo el título arrastra la ventana. Los botones conservan
-        // sus propios clics.
         title.setPadding(dp(4), dp(8), dp(4), dp(8));
-        header.addView(
-                title,
-                new LinearLayout.LayoutParams(0, -2, 1)
-        );
+        header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
 
         Button minimize = button("—");
-        header.addView(
-                minimize,
-                new LinearLayout.LayoutParams(dp(44), dp(42))
-        );
+        header.addView(minimize, new LinearLayout.LayoutParams(dp(44), dp(42)));
 
         Button close = button("×");
-        header.addView(
-                close,
-                new LinearLayout.LayoutParams(dp(44), dp(42))
-        );
+        header.addView(close, new LinearLayout.LayoutParams(dp(44), dp(42)));
 
         box.addView(header);
 
-        direction = text("🇺🇸  →  🇦🇷", 16, Color.rgb(255, 220, 90));
+        direction = text("🇺🇸 → 🇦🇷", 16, Color.rgb(255, 220, 90));
         direction.setGravity(Gravity.CENTER);
         direction.setPadding(0, dp(10), 0, dp(10));
         box.addView(direction);
-
         direction.setOnClickListener(v -> toggleDirection());
 
         LinearLayout inputRow = new LinearLayout(this);
@@ -221,18 +197,10 @@ public class OverlayService extends Service {
         input.setHintTextColor(Color.LTGRAY);
         input.setBackgroundColor(Color.TRANSPARENT);
         input.setPadding(dp(4), dp(8), dp(4), dp(8));
-
-        inputRow.addView(
-                input,
-                new LinearLayout.LayoutParams(0, dp(58), 1)
-        );
+        inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(58), 1));
 
         Button mic = button("🎙");
-        inputRow.addView(
-                mic,
-                new LinearLayout.LayoutParams(dp(48), dp(48))
-        );
-
+        inputRow.addView(mic, new LinearLayout.LayoutParams(dp(48), dp(48)));
         box.addView(inputRow);
 
         LinearLayout actions = new LinearLayout(this);
@@ -240,10 +208,7 @@ public class OverlayService extends Service {
         actions.setPadding(0, dp(8), 0, dp(4));
 
         Button swap = button("⇄");
-        actions.addView(
-                swap,
-                new LinearLayout.LayoutParams(dp(64), dp(48))
-        );
+        actions.addView(swap, new LinearLayout.LayoutParams(dp(64), dp(48)));
 
         Button translate = button("Traducir");
         translate.setTextColor(Color.rgb(8, 29, 75));
@@ -251,19 +216,10 @@ public class OverlayService extends Service {
                 Color.rgb(0, 220, 255),
                 Color.rgb(0, 220, 255)
         ));
-
-        actions.addView(
-                translate,
-                new LinearLayout.LayoutParams(0, dp(48), 1)
-        );
-
+        actions.addView(translate, new LinearLayout.LayoutParams(0, dp(48), 1));
         box.addView(actions);
 
-        result = text(
-                "La traducción aparecerá aquí.",
-                16,
-                Color.WHITE
-        );
+        result = text("La traducción aparecerá aquí.", 16, Color.WHITE);
         result.setPadding(dp(8), dp(14), dp(8), dp(12));
         box.addView(result);
 
@@ -274,17 +230,10 @@ public class OverlayService extends Service {
         outputActions.addView(outputFlag);
 
         Button speak = button("🔊");
-        outputActions.addView(
-                speak,
-                new LinearLayout.LayoutParams(dp(64), dp(48))
-        );
+        outputActions.addView(speak, new LinearLayout.LayoutParams(dp(64), dp(48)));
 
         Button copy = button("Copiar");
-        outputActions.addView(
-                copy,
-                new LinearLayout.LayoutParams(0, dp(48), 1)
-        );
-
+        outputActions.addView(copy, new LinearLayout.LayoutParams(0, dp(48), 1));
         box.addView(outputActions);
 
         TextView resize = text(
@@ -311,7 +260,6 @@ public class OverlayService extends Service {
         params.gravity = Gravity.TOP | Gravity.START;
         params.x = dp(12);
         params.y = dp(120);
-
         panel = box;
 
         title.setOnTouchListener(new View.OnTouchListener() {
@@ -331,22 +279,18 @@ public class OverlayService extends Service {
                         return true;
 
                     case MotionEvent.ACTION_MOVE:
-                        params.x = startX
-                                + (int) (event.getRawX() - downX);
-                        params.y = startY
-                                + (int) (event.getRawY() - downY);
-
-                        params.x = Math.max(
+                        params.x = startX + (int) (event.getRawX() - downX);
+                        params.y = Math.max(
                                 0,
-                                Math.min(
-                                        params.x,
-                                        getResources()
-                                                .getDisplayMetrics().widthPixels
-                                                - params.width
-                                )
+                                startY + (int) (event.getRawY() - downY)
                         );
 
-                        params.y = Math.max(0, params.y);
+                        int screenWidth = getResources()
+                                .getDisplayMetrics().widthPixels;
+                        params.x = Math.max(
+                                0,
+                                Math.min(params.x, screenWidth - params.width)
+                        );
 
                         try {
                             wm.updateViewLayout(panel, params);
@@ -358,46 +302,29 @@ public class OverlayService extends Service {
                     case MotionEvent.ACTION_CANCEL:
                         return true;
                 }
-
                 return false;
             }
         });
 
         minimize.setOnClickListener(v -> {
             minimized = !minimized;
-
-            inputRow.setVisibility(
-                    minimized ? View.GONE : View.VISIBLE
-            );
-            actions.setVisibility(
-                    minimized ? View.GONE : View.VISIBLE
-            );
-            result.setVisibility(
-                    minimized ? View.GONE : View.VISIBLE
-            );
-            outputActions.setVisibility(
-                    minimized ? View.GONE : View.VISIBLE
-            );
-            resize.setVisibility(
-                    minimized ? View.GONE : View.VISIBLE
-            );
-
+            inputRow.setVisibility(minimized ? View.GONE : View.VISIBLE);
+            actions.setVisibility(minimized ? View.GONE : View.VISIBLE);
+            result.setVisibility(minimized ? View.GONE : View.VISIBLE);
+            outputActions.setVisibility(minimized ? View.GONE : View.VISIBLE);
+            resize.setVisibility(minimized ? View.GONE : View.VISIBLE);
             minimize.setText(minimized ? "+" : "—");
         });
 
         close.setOnClickListener(v -> stopSelf());
-
         swap.setOnClickListener(v -> toggleDirection());
-
         translate.setOnClickListener(v -> translateText());
 
-        mic.setOnClickListener(v ->
-                Toast.makeText(
-                        this,
-                        "El dictado por voz todavía necesita integrarse con el permiso de micrófono.",
-                        Toast.LENGTH_LONG
-                ).show()
-        );
+        mic.setOnClickListener(v -> Toast.makeText(
+                this,
+                "El dictado por voz todavía requiere integrar el reconocimiento de Android.",
+                Toast.LENGTH_LONG
+        ).show());
 
         speak.setOnClickListener(v -> speakTranslation());
 
@@ -407,28 +334,14 @@ public class OverlayService extends Service {
             if (value.isEmpty()
                     || value.equals("La traducción aparecerá aquí.")
                     || value.equals("Traduciendo…")) {
-                Toast.makeText(
-                        this,
-                        "Todavía no hay una traducción para copiar.",
-                        Toast.LENGTH_SHORT
-                ).show();
+                Toast.makeText(this, "Todavía no hay una traducción.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             ClipboardManager clipboard =
-                    (ClipboardManager) getSystemService(
-                            Context.CLIPBOARD_SERVICE
-                    );
-
-            clipboard.setPrimaryClip(
-                    ClipData.newPlainText("WordFlow", value)
-            );
-
-            Toast.makeText(
-                    this,
-                    "Texto copiado",
-                    Toast.LENGTH_SHORT
-            ).show();
+                    (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            clipboard.setPrimaryClip(ClipData.newPlainText("WordFlow", value));
+            Toast.makeText(this, "Texto copiado", Toast.LENGTH_SHORT).show();
         });
 
         resize.setOnTouchListener(new View.OnTouchListener() {
@@ -444,25 +357,19 @@ public class OverlayService extends Service {
                 }
 
                 if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                    int newWidth = startWidth
-                            + (int) (event.getRawX() - downX);
-
+                    int newWidth = startWidth + (int) (event.getRawX() - downX);
                     int screenWidth = getResources()
                             .getDisplayMetrics().widthPixels;
 
                     params.width = Math.max(
                             dp(240),
-                            Math.min(
-                                    Math.min(dp(420), screenWidth),
-                                    newWidth
-                            )
+                            Math.min(Math.min(dp(420), screenWidth), newWidth)
                     );
 
                     try {
                         wm.updateViewLayout(panel, params);
                     } catch (Exception ignored) {
                     }
-
                     return true;
                 }
 
@@ -480,22 +387,12 @@ public class OverlayService extends Service {
 
     private void toggleDirection() {
         northToArgentine = !northToArgentine;
-
-        direction.setText(
-                northToArgentine
-                        ? "🇺🇸  →  🇦🇷"
-                        : "🇦🇷  →  🇺🇸"
-        );
-
+        direction.setText(northToArgentine ? "🇺🇸 → 🇦🇷" : "🇦🇷 → 🇺🇸");
         inputFlag.setText(northToArgentine ? "🇺🇸" : "🇦🇷");
         outputFlag.setText(northToArgentine ? "🇦🇷" : "🇺🇸");
-
-        input.setHint(
-                northToArgentine
-                        ? "Escribí en norteamericano..."
-                        : "Escribí en argentino..."
-        );
-
+        input.setHint(northToArgentine
+                ? "Escribí en norteamericano..."
+                : "Escribí en argentino...");
         result.setText("La traducción aparecerá aquí.");
     }
 
@@ -508,9 +405,6 @@ public class OverlayService extends Service {
         }
 
         final boolean translateToArgentine = northToArgentine;
-
-        // Si el usuario escribe en argentino, expandimos algunas
-        // expresiones conocidas antes de usar el traductor general.
         final String sourceText = translateToArgentine
                 ? original
                 : ArgentineSpanishAdapter
@@ -520,7 +414,6 @@ public class OverlayService extends Service {
 
         worker.execute(() -> {
             String translated;
-
             HttpURLConnection conn = null;
 
             try {
@@ -529,10 +422,7 @@ public class OverlayService extends Service {
                         StandardCharsets.UTF_8.name()
                 );
 
-                String pair = translateToArgentine
-                        ? "en|es"
-                        : "es|en";
-
+                String pair = translateToArgentine ? "en|es" : "es|en";
                 URL url = new URL(
                         "https://api.mymemory.translated.net/get?q="
                                 + q + "&langpair=" + pair
@@ -548,7 +438,6 @@ public class OverlayService extends Service {
                                 conn.getInputStream(),
                                 StandardCharsets.UTF_8
                         ))) {
-
                     StringBuilder response = new StringBuilder();
                     String line;
 
@@ -556,10 +445,7 @@ public class OverlayService extends Service {
                         response.append(line);
                     }
 
-                    JSONObject json = new JSONObject(
-                            response.toString()
-                    );
-
+                    JSONObject json = new JSONObject(response.toString());
                     translated = json.getJSONObject("responseData")
                             .getString("translatedText");
                 }
@@ -578,7 +464,6 @@ public class OverlayService extends Service {
             }
 
             final String output = translated;
-
             handler.post(() -> {
                 if (result != null) {
                     result.setText(output);
@@ -598,18 +483,14 @@ public class OverlayService extends Service {
                 || value.equals("La traducción aparecerá aquí.")
                 || value.equals("Traduciendo…")
                 || value.startsWith("No se pudo traducir.")) {
-            Toast.makeText(
-                    this,
-                    "Primero traducí una palabra o frase.",
-                    Toast.LENGTH_SHORT
-            ).show();
+            Toast.makeText(this, "Primero traducí una frase.", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (!ttsReady || textToSpeech == null) {
             Toast.makeText(
                     this,
-                    "El audio todavía se está preparando. Probá de nuevo en unos segundos.",
+                    "El audio se está preparando. Probá otra vez.",
                     Toast.LENGTH_SHORT
             ).show();
             return;
@@ -619,13 +500,13 @@ public class OverlayService extends Service {
                 ? new Locale("es", "AR")
                 : Locale.US;
 
-        int languageStatus = textToSpeech.setLanguage(language);
+        int status = textToSpeech.setLanguage(language);
 
-        if (languageStatus == TextToSpeech.LANG_MISSING_DATA
-                || languageStatus == TextToSpeech.LANG_NOT_SUPPORTED) {
+        if (status == TextToSpeech.LANG_MISSING_DATA
+                || status == TextToSpeech.LANG_NOT_SUPPORTED) {
             Toast.makeText(
                     this,
-                    "Tu Android no tiene instalada una voz compatible con este idioma.",
+                    "Android no tiene instalada una voz compatible.",
                     Toast.LENGTH_LONG
             ).show();
             return;
@@ -641,4 +522,30 @@ public class OverlayService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-  
+        return START_NOT_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        if (panel != null && wm != null) {
+            try {
+                wm.removeView(panel);
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+            textToSpeech = null;
+        }
+
+        worker.shutdownNow();
+        super.onDestroy();
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+    }
