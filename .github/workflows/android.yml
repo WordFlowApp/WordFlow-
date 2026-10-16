@@ -1,67 +1,54 @@
+
 name: WordFlow Android APK
 
 on:
-workflow_dispatch:
-push:
-branches:
-- main
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
-contents: read
+  contents: read
 
 jobs:
-build:
-name: Compilar WordFlow
-runs-on: ubuntu-latest
-timeout-minutes: 30
+  build:
+    name: Compilar WordFlow
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
 
-steps:
-  - name: Descargar codigo
-    uses: actions/checkout@v4
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
 
-  - name: Configurar Java
-    uses: actions/setup-java@v4
-    with:
-      distribution: temurin
-      java-version: '17'
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-  - name: Verificar proyecto
-    shell: bash
-    run: |
-      set -e
-      echo "Verificando proyecto WordFlow del repositorio..."
-      test -f settings.gradle -o -f settings.gradle.kts
-      test -f app/build.gradle -o -f app/build.gradle.kts
-      test -f app/src/main/java/com/wordflow/app/OverlayService.java
-      test -f app/src/main/java/com/wordflow/app/MainActivity.java
-      echo "Se compilara el codigo que esta directamente en el repositorio."
+      - name: Verificar proyecto
+        shell: bash
+        run: |
+          set -e
+          echo "Verificando proyecto WordFlow..."
+          test -f settings.gradle -o -f settings.gradle.kts
+          test -f app/build.gradle -o -f app/build.gradle.kts
+          test -f app/src/main/java/com/wordflow/app/OverlayService.java
+          test -f app/src/main/java/com/wordflow/app/MainActivity.java
 
-  - name: Preparar Gradle
-    uses: gradle/actions/setup-gradle@v4
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v4
 
-  - name: Compilar APK
-    uses: gradle/gradle-build-action@v3
-    with:
-      gradle-version: '8.9'
-      arguments: assembleDebug
+      - name: Compilar APK
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: '8.9'
+          arguments: assembleDebug
 
-  - name: Verificar APK
-    shell: bash
-    run: |
-      set -e
-      APK="app/build/outputs/apk/debug/app-debug.apk"
-      if [ ! -f "$APK" ]; then
-        echo "ERROR: No se genero el APK esperado."
-        find app/build/outputs/apk -type f -name "*.apk" || true
-        exit 1
-      fi
-      echo "APK generado correctamente: $APK"
-      sha256sum "$APK"
-
-  - name: Guardar APK
-    uses: actions/upload-artifact@v4
-    with:
-      name: WordFlow-APK
-      path: app/build/outputs/apk/debug/*.apk
-      if-no-files-found: error
-      retention-days: 7
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: WordFlow-APK
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
