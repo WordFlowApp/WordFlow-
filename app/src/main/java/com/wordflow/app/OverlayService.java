@@ -51,31 +51,30 @@ public class OverlayService extends Service {
 
     private WindowManager wm;
     private WindowManager.LayoutParams params;
-    private View panel;
+    private LinearLayout panel;
     private EditText input;
     private TextView result, direction;
     private TextToSpeech tts;
-    private SpeechRecognizer speechRecognizer;
-    private boolean ttsReady;
+    private SpeechRecognizer recognizer;
+    private boolean ttsReady = false;
     private boolean northToArgentine = true;
-    private boolean minimized;
-    private final int panelWidth = 320;
+    private boolean minimized = false;
     private int screenWidth, screenHeight;
-
     private final ExecutorService worker =
             Executors.newSingleThreadExecutor();
-    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Handler main = new Handler(Looper.getMainLooper());
 
     private int dp(float value) {
-        return (int) (value *
-                getResources().getDisplayMetrics().density + 0.5f);
+        return (int) (value * getResources()
+                .getDisplayMetrics().density + 0.5f);
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        if (!Settings.canDrawOverlays(this)) {
+        if (Build.VERSION.SDK_INT >= 23
+                && !Settings.canDrawOverlays(this)) {
             stopSelf();
             return;
         }
@@ -97,14 +96,12 @@ public class OverlayService extends Service {
     }
 
     private void createNotification() {
-        String channelId = "wordflow_overlay";
+        String id = "wordflow_overlay";
 
         if (Build.VERSION.SDK_INT >= 26) {
             NotificationChannel channel = new NotificationChannel(
-                    channelId,
-                    "WordFlow flotante",
+                    id, "WordFlow flotante",
                     NotificationManager.IMPORTANCE_LOW);
-
             NotificationManager manager =
                     (NotificationManager) getSystemService(
                             NOTIFICATION_SERVICE);
@@ -112,90 +109,79 @@ public class OverlayService extends Service {
         }
 
         Notification.Builder builder = Build.VERSION.SDK_INT >= 26
-                ? new Notification.Builder(this, channelId)
+                ? new Notification.Builder(this, id)
                 : new Notification.Builder(this);
 
-        builder.setContentTitle("WordFlow está activo")
-                .setContentText("Tu ventana flotante está disponible.")
+        Notification notification = builder
+                .setContentTitle("WordFlow está activo")
+                .setContentText("Traductor flotante disponible")
                 .setSmallIcon(android.R.drawable.ic_menu_search)
-                .setOngoing(true);
+                .setOngoing(true)
+                .build();
 
-        startForeground(7, builder.build());
+        startForeground(7, notification);
     }
 
-    private GradientDrawable rounded(int color, int borderColor) {
-        GradientDrawable background = new GradientDrawable();
-        background.setColor(color);
-        background.setCornerRadius(dp(18));
-
-        if (borderColor != Color.TRANSPARENT) {
-            background.setStroke(dp(1), borderColor);
-        }
-
-        return background;
+    private GradientDrawable rounded(int color) {
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(color);
+        d.setCornerRadius(dp(18));
+        return d;
     }
 
-    private TextView text(String value, int size, int color) {
-        TextView view = new TextView(this);
-        view.setText(value);
-        view.setTextSize(size);
-        view.setTextColor(color);
-        return view;
+    private TextView makeText(String value, int size, int color) {
+        TextView v = new TextView(this);
+        v.setText(value);
+        v.setTextSize(size);
+        v.setTextColor(color);
+        return v;
     }
 
-    private Button button(String value) {
-        Button view = new Button(this);
-        view.setText(value);
-        view.setAllCaps(false);
-        return view;
+    private Button makeButton(String value) {
+        Button b = new Button(this);
+        b.setText(value);
+        b.setAllCaps(false);
+        return b;
     }
 
     private void showPanel() {
-        LinearLayout box = new LinearLayout(this) {
+        panel = new LinearLayout(this) {
             private float initialDistance;
             private int initialWidth, initialHeight;
-            private boolean pinching;
+            private boolean resizing;
 
-            private float fingerDistance(MotionEvent event) {
-                if (event.getPointerCount() < 2) return 0;
-
-                float dx = event.getX(0) - event.getX(1);
-                float dy = event.getY(0) - event.getY(1);
-
-                return (float) Math.sqrt(dx * dx + dy * dy);
+            private float distance(MotionEvent e) {
+                if (e.getPointerCount() < 2) return 0;
+                float x = e.getX(0) - e.getX(1);
+                float y = e.getY(0) - e.getY(1);
+                return (float) Math.sqrt(x * x + y * y);
             }
 
             @Override
-            public boolean dispatchTouchEvent(MotionEvent event) {
-                int action = event.getActionMasked();
+            public boolean dispatchTouchEvent(MotionEvent e) {
+                int action = e.getActionMasked();
 
                 if (action == MotionEvent.ACTION_POINTER_DOWN
-                        && event.getPointerCount() >= 2) {
-                    initialDistance = fingerDistance(event);
+                        && e.getPointerCount() >= 2) {
+                    initialDistance = distance(e);
                     initialWidth = params.width;
                     initialHeight = panel.getHeight();
-                    if (initialHeight <= 0) initialHeight = dp(300);
-                    pinching = true;
+                    if (initialHeight <= 0) initialHeight = dp(320);
+                    resizing = true;
                     return true;
                 }
 
-                if (pinching && action == MotionEvent.ACTION_MOVE
-                        && event.getPointerCount() >= 2) {
-                    float distance = fingerDistance(event);
-
-                    if (initialDistance > 0 && distance > 0) {
-                        float scale = distance / initialDistance;
-
-                        params.width = Math.max(
-                                dp(240),
+                if (resizing && action == MotionEvent.ACTION_MOVE
+                        && e.getPointerCount() >= 2) {
+                    float current = distance(e);
+                    if (initialDistance > 0 && current > 0) {
+                        float scale = current / initialDistance;
+                        params.width = Math.max(dp(230),
                                 Math.min(screenWidth - dp(16),
                                         (int) (initialWidth * scale)));
-
-                        params.height = Math.max(
-                                dp(160),
+                        params.height = Math.max(dp(170),
                                 Math.min(screenHeight - dp(80),
                                         (int) (initialHeight * scale)));
-
                         try {
                             wm.updateViewLayout(panel, params);
                         } catch (Exception ignored) {
@@ -204,13 +190,12 @@ public class OverlayService extends Service {
                     return true;
                 }
 
-                if (pinching && (action == MotionEvent.ACTION_POINTER_UP
+                if (resizing && (action == MotionEvent.ACTION_POINTER_UP
                         || action == MotionEvent.ACTION_UP
                         || action == MotionEvent.ACTION_CANCEL)) {
-                    pinching = false;
+                    resizing = false;
                     params.height =
                             WindowManager.LayoutParams.WRAP_CONTENT;
-
                     try {
                         wm.updateViewLayout(panel, params);
                     } catch (Exception ignored) {
@@ -218,115 +203,102 @@ public class OverlayService extends Service {
                     return true;
                 }
 
-                if (pinching) return true;
-
-                return super.dispatchTouchEvent(event);
+                if (resizing) return true;
+                return super.dispatchTouchEvent(e);
             }
         };
 
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(dp(12), dp(10), dp(12), dp(12));
-        box.setBackground(rounded(
-                Color.rgb(8, 29, 75), Color.rgb(0, 220, 255)));
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(10), dp(8), dp(10), dp(10));
+        panel.setBackground(rounded(Color.rgb(8, 29, 75)));
+        panel.setElevation(dp(8));
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
 
-        TextView title = text("WordFlow", 20, Color.CYAN);
+        TextView title = makeText("WordFlow", 20, Color.CYAN);
         title.setTypeface(null, Typeface.BOLD);
         header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
 
-        Button minimizeButton = button("—");
+        Button minimizeButton = makeButton("—");
         header.addView(minimizeButton,
                 new LinearLayout.LayoutParams(dp(44), dp(42)));
 
-        Button closeButton = button("×");
+        Button closeButton = makeButton("×");
         header.addView(closeButton,
                 new LinearLayout.LayoutParams(dp(44), dp(42)));
+        panel.addView(header);
 
-        box.addView(header);
-
-        direction = text("🇺🇸  →  🇦🇷", 16,
-                Color.rgb(255, 220, 90));
+        direction = makeText("🇺🇸 Norteamericano → 🇦🇷 Argentino",
+                13, Color.rgb(255, 220, 90));
         direction.setGravity(Gravity.CENTER);
         direction.setPadding(0, dp(8), 0, dp(8));
-        box.addView(direction);
+        panel.addView(direction);
 
-        direction.setOnClickListener(v -> {
-            northToArgentine = !northToArgentine;
-            direction.setText(northToArgentine
-                    ? "🇺🇸  →  🇦🇷" : "🇦🇷  →  🇺🇸");
-            setSpeechLanguage();
-        });
+        direction.setOnClickListener(v -> switchDirection());
 
         LinearLayout inputRow = new LinearLayout(this);
         inputRow.setGravity(Gravity.CENTER_VERTICAL);
-        inputRow.setPadding(dp(8), 0, dp(4), 0);
-        inputRow.setBackground(rounded(
-                Color.rgb(35, 55, 100), Color.TRANSPARENT));
-
-        inputRow.addView(text("🇺🇸", 24, Color.WHITE));
+        inputRow.setPadding(dp(6), 0, dp(4), 0);
+        inputRow.setBackground(rounded(Color.rgb(35, 55, 100)));
 
         input = new EditText(this);
-        input.setSingleLine(false);
-        input.setMinLines(1);
-        input.setMaxLines(3);
         input.setHint("Escribí una palabra o frase");
         input.setTextColor(Color.WHITE);
         input.setHintTextColor(Color.LTGRAY);
+        input.setTextSize(15);
+        input.setMinLines(1);
+        input.setMaxLines(3);
         input.setBackgroundColor(Color.TRANSPARENT);
-
         inputRow.addView(input,
-                new LinearLayout.LayoutParams(0, dp(56), 1));
+                new LinearLayout.LayoutParams(0, dp(58), 1));
 
-        Button micButton = button("🎙");
+        Button micButton = makeButton("🎙");
         inputRow.addView(micButton,
                 new LinearLayout.LayoutParams(dp(48), dp(48)));
-        box.addView(inputRow);
+        panel.addView(inputRow);
 
         LinearLayout actions = new LinearLayout(this);
-        actions.setGravity(Gravity.CENTER_VERTICAL);
-
-        Button swapButton = button("🇺🇸 ⇄ 🇦🇷");
+        Button swapButton = makeButton("🇺🇸 ⇄ 🇦🇷");
         actions.addView(swapButton,
                 new LinearLayout.LayoutParams(dp(112), dp(48)));
 
-        Button translateButton = button("Traducir");
+        Button translateButton = makeButton("Traducir");
         actions.addView(translateButton,
                 new LinearLayout.LayoutParams(0, dp(48), 1));
-        box.addView(actions);
+        panel.addView(actions);
 
-        result = text("La traducción aparecerá aquí.", 16, Color.WHITE);
+        result = makeText("La traducción aparecerá aquí.",
+                16, Color.WHITE);
         result.setPadding(dp(8), dp(12), dp(8), dp(8));
-        box.addView(result);
+        panel.addView(result);
 
-        LinearLayout outputActions = new LinearLayout(this);
-        outputActions.setGravity(Gravity.CENTER_VERTICAL);
-        outputActions.addView(text("🇦🇷", 24, Color.WHITE));
+        LinearLayout output = new LinearLayout(this);
+        output.setGravity(Gravity.CENTER_VERTICAL);
 
-        Button speakButton = button("🔊");
-        outputActions.addView(speakButton,
-                new LinearLayout.LayoutParams(dp(64), dp(48)));
-
-        Button copyButton = button("Copiar");
-        outputActions.addView(copyButton,
+        Button speakButton = makeButton("🔊 Escuchar");
+        output.addView(speakButton,
                 new LinearLayout.LayoutParams(0, dp(48), 1));
-        box.addView(outputActions);
 
-        TextView resizeHint = text(
+        Button copyButton = makeButton("Copiar");
+        output.addView(copyButton,
+                new LinearLayout.LayoutParams(0, dp(48), 1));
+        panel.addView(output);
+
+        TextView resizeHint = makeText(
                 "🤏 Pellizcá para cambiar tamaño · Arrastrá arriba para mover",
-                11, Color.LTGRAY);
+                10, Color.LTGRAY);
         resizeHint.setPadding(0, dp(8), 0, 0);
-        box.addView(resizeHint);
+        panel.addView(resizeHint);
 
-        int windowType = Build.VERSION.SDK_INT >= 26
+        int type = Build.VERSION.SDK_INT >= 26
                 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                 : WindowManager.LayoutParams.TYPE_PHONE;
 
         params = new WindowManager.LayoutParams(
-                dp(panelWidth),
+                dp(320),
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                windowType,
+                type,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
@@ -334,41 +306,35 @@ public class OverlayService extends Service {
         params.gravity = Gravity.TOP | Gravity.START;
         params.x = dp(12);
         params.y = dp(120);
-        panel = box;
 
         header.setOnTouchListener(new View.OnTouchListener() {
-            private int startX, startY;
             private float downX, downY;
+            private int startX, startY;
 
             @Override
-            public boolean onTouch(View view, MotionEvent event) {
-                switch (event.getActionMasked()) {
+            public boolean onTouch(View v, MotionEvent e) {
+                switch (e.getActionMasked()) {
                     case MotionEvent.ACTION_DOWN:
+                        downX = e.getRawX();
+                        downY = e.getRawY();
                         startX = params.x;
                         startY = params.y;
-                        downX = event.getRawX();
-                        downY = event.getRawY();
                         return true;
-
                     case MotionEvent.ACTION_MOVE:
                         params.x = Math.max(0, Math.min(
                                 screenWidth - panel.getWidth(),
-                                startX + (int) (event.getRawX() - downX)));
-
+                                startX + (int) (e.getRawX() - downX)));
                         params.y = Math.max(0, Math.min(
                                 screenHeight - dp(80),
-                                startY + (int) (event.getRawY() - downY)));
-
+                                startY + (int) (e.getRawY() - downY)));
                         try {
                             wm.updateViewLayout(panel, params);
                         } catch (Exception ignored) {
                         }
                         return true;
-
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         return true;
-
                     default:
                         return false;
                 }
@@ -377,18 +343,14 @@ public class OverlayService extends Service {
 
         minimizeButton.setOnClickListener(v -> {
             minimized = !minimized;
-
             inputRow.setVisibility(minimized ? View.GONE : View.VISIBLE);
             actions.setVisibility(minimized ? View.GONE : View.VISIBLE);
             result.setVisibility(minimized ? View.GONE : View.VISIBLE);
-            outputActions.setVisibility(
-                    minimized ? View.GONE : View.VISIBLE);
+            output.setVisibility(minimized ? View.GONE : View.VISIBLE);
             resizeHint.setVisibility(minimized ? View.GONE : View.VISIBLE);
             direction.setVisibility(minimized ? View.GONE : View.VISIBLE);
-
             minimizeButton.setText(minimized ? "+" : "—");
             params.height = WindowManager.LayoutParams.WRAP_CONTENT;
-
             try {
                 wm.updateViewLayout(panel, params);
             } catch (Exception ignored) {
@@ -396,21 +358,16 @@ public class OverlayService extends Service {
         });
 
         closeButton.setOnClickListener(v -> stopSelf());
-        swapButton.setOnClickListener(v -> direction.performClick());
+        swapButton.setOnClickListener(v -> switchDirection());
         translateButton.setOnClickListener(v -> translateText());
         micButton.setOnClickListener(v -> startVoiceRecognition());
         speakButton.setOnClickListener(v -> speakTranslation());
 
         copyButton.setOnClickListener(v -> {
-            String value = result.getText().toString();
-
-            ClipboardManager clipboard =
-                    (ClipboardManager) getSystemService(
-                            Context.CLIPBOARD_SERVICE);
-
-            clipboard.setPrimaryClip(
-                    ClipData.newPlainText("WordFlow", value));
-
+            ClipboardManager clipboard = (ClipboardManager)
+                    getSystemService(Context.CLIPBOARD_SERVICE);
+            clipboard.setPrimaryClip(ClipData.newPlainText(
+                    "WordFlow", result.getText().toString()));
             Toast.makeText(this, "Texto copiado",
                     Toast.LENGTH_SHORT).show();
         });
@@ -422,140 +379,155 @@ public class OverlayService extends Service {
         }
     }
 
+    private void switchDirection() {
+        northToArgentine = !northToArgentine;
+        direction.setText(northToArgentine
+                ? "🇺🇸 Norteamericano → 🇦🇷 Argentino"
+                : "🇦🇷 Argentino → 🇺🇸 Norteamericano");
+        setSpeechLanguage();
+    }
+
     private void startVoiceRecognition() {
         if (Build.VERSION.SDK_INT >= 23
                 && checkSelfPermission(Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this,
-                    "Autorizá el micrófono desde la pantalla de WordFlow.",
+                    "Autorizá el micrófono desde WordFlow.",
                     Toast.LENGTH_LONG).show();
             return;
         }
 
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            Toast.makeText(this,
-                    "El reconocimiento de voz no está disponible.",
-                    Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Reconocimiento de voz no disponible",
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
         try {
-            if (speechRecognizer != null) {
-                speechRecognizer.destroy();
-            }
+            if (recognizer != null) recognizer.destroy();
+            recognizer = SpeechRecognizer.createSpeechRecognizer(this);
 
-            speechRecognizer =
-                    SpeechRecognizer.createSpeechRecognizer(this);
-
-            speechRecognizer.setRecognitionListener(
-                    new RecognitionListener() {
-                @Override
-                public void onReadyForSpeech(android.os.Bundle bundle) {
-                    handler.post(() -> Toast.makeText(
-                            OverlayService.this,
-                            "Te escucho…", Toast.LENGTH_SHORT).show());
-                }
-
+            recognizer.setRecognitionListener(new RecognitionListener() {
+                @Override public void onReadyForSpeech(android.os.Bundle b) {}
                 @Override public void onBeginningOfSpeech() {}
                 @Override public void onRmsChanged(float rms) {}
-                @Override public void onBufferReceived(byte[] buffer) {}
+                @Override public void onBufferReceived(byte[] b) {}
                 @Override public void onEndOfSpeech() {}
+                @Override public void onPartialResults(android.os.Bundle b) {}
+                @Override public void onEvent(int e, android.os.Bundle b) {}
 
                 @Override
                 public void onError(int error) {
-                    handler.post(() -> Toast.makeText(
+                    main.post(() -> Toast.makeText(
                             OverlayService.this,
-                            "No pude reconocer la voz. Probá otra vez.",
+                            "No reconocí la voz. Intentá otra vez.",
                             Toast.LENGTH_SHORT).show());
                 }
 
                 @Override
-                public void onResults(android.os.Bundle bundle) {
-                    ArrayList<String> matches = bundle.getStringArrayList(
+                public void onResults(android.os.Bundle b) {
+                    ArrayList<String> matches = b.getStringArrayList(
                             SpeechRecognizer.RESULTS_RECOGNITION);
-
                     if (matches != null && !matches.isEmpty()) {
-                        handler.post(() -> {
+                        main.post(() -> {
                             input.setText(matches.get(0));
                             input.setSelection(input.length());
                         });
                     }
                 }
-
-                @Override public void onPartialResults(android.os.Bundle b) {}
-                @Override public void onEvent(int event, android.os.Bundle b) {}
             });
 
-            Intent speechIntent =
-                    new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-
-            speechIntent.putExtra(
-                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+            Intent intent = new Intent(
+                    RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                     RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-
-            speechIntent.putExtra(
-                    RecognizerIntent.EXTRA_LANGUAGE,
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,
                     northToArgentine ? "en-US" : "es-AR");
-
-            speechIntent.putExtra(
-                    RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-
-            speechRecognizer.startListening(speechIntent);
+            intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+            recognizer.startListening(intent);
 
         } catch (Exception e) {
-            Toast.makeText(this,
-                    "No se pudo iniciar el micrófono.",
+            Toast.makeText(this, "No se pudo iniciar el micrófono",
                     Toast.LENGTH_SHORT).show();
         }
     }
 
     private void translateText() {
-        String word = input.getText().toString().trim();
+        String sourceText = input.getText().toString().trim();
 
-        if (word.isEmpty()) {
-            result.setText("Escribí o dictá una palabra o frase primero.");
+        if (sourceText.isEmpty()) {
+            result.setText("Escribí o dictá algo primero.");
             return;
         }
 
         result.setText("Traduciendo…");
+        final boolean toArgentine = northToArgentine;
 
         worker.execute(() -> {
-            String translated;
+            HttpURLConnection connection = null;
 
             try {
-                String encoded = URLEncoder.encode(word, "UTF-8");
-                String pair = northToArgentine ? "en|es" : "es|en";
-
+                String pair = toArgentine ? "en|es" : "es|en";
+                String query = URLEncoder.encode(sourceText, "UTF-8");
                 URL url = new URL(
                         "https://api.mymemory.translated.net/get?q="
-                                + encoded + "&langpair=" + pair);
+                                + query + "&langpair=" + pair);
 
-                HttpURLConnection connection =
-                        (HttpURLConnection) url.openConnection();
-
-                connection.setConnectTimeout(10000);
-                connection.setReadTimeout(10000);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setConnectTimeout(12000);
+                connection.setReadTimeout(12000);
 
                 StringBuilder response = new StringBuilder();
-
                 try (BufferedReader reader = new BufferedReader(
                         new InputStreamReader(
                                 connection.getInputStream(),
                                 StandardCharsets.UTF_8))) {
                     String line;
-
                     while ((line = reader.readLine()) != null) {
                         response.append(line);
                     }
-                } finally {
-                    connection.disconnect();
                 }
 
                 JSONObject json = new JSONObject(response.toString());
-                translated = json.getJSONObject("responseData")
+                String translated = json.getJSONObject("responseData")
                         .getString("translatedText");
 
-                if (!northToArgentine) {
+                if (!toArgentine) {
                     translated = ArgentineSpanishAdapter
                             .toArgentineSpanish(translated);
+                }
+
+                final String finalText = translated;
+                main.post(() -> result.setText(finalText));
+
+            } catch (Exception e) {
+                main.post(() -> result.setText(
+                        "No se pudo traducir. Revisá internet e intentá otra vez."));
+            } finally {
+                if (connection != null) connection.disconnect();
             }
+        });
+    }
+
+    private void setSpeechLanguage() {
+        if (ttsReady && tts != null) {
+            tts.setLanguage(northToArgentine
+                    ? new Locale("es", "AR")
+                    : Locale.US);
+        }
+    }
+
+    private void speakTranslation() {
+        String value = result.getText().toString().trim();
+
+        if (value.isEmpty()
+                || value.equals("La traducción aparecerá aquí.")
+                || value.equals("Traduciendo…")) {
+            Toast.makeText(this, "Primero traducí un texto",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (ttsReady && tts != null) {
+            setSpeechLanguage();
+            tts.spe
