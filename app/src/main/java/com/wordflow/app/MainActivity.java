@@ -32,6 +32,8 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle state) {
         super.onCreate(state);
 
+        Toast.makeText(this, "WordFlow versión 0.3.3", Toast.LENGTH_LONG).show();
+
         getWindow().setStatusBarColor(Color.rgb(3, 14, 45));
         getWindow().setNavigationBarColor(Color.rgb(3, 14, 45));
 
