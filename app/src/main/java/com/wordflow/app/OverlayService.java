@@ -431,19 +431,33 @@ public class OverlayService extends Service {
                 }
                 @Override public void onResults(android.os.Bundle b) {
                     ArrayList<String> matches = b.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                    if (matches != null && !matches.isEmpty()) main.post(() -> {
-                        input.setText(matches.get(0));
-                        input.setSelection(input.length());
-                        Toast.makeText(OverlayService.this, "Voz convertida a texto", Toast.LENGTH_SHORT).show();
-                    });
-                    else main.post(() -> Toast.makeText(OverlayService.this, "No se reconocieron palabras. Probá hablar más cerca del micrófono.", Toast.LENGTH_LONG).show());
+                    if (matches != null && !matches.isEmpty()) {
+                        String recognized = matches.get(0) == null ? "" : matches.get(0).trim();
+                        main.post(() -> {
+                            if (!recognized.isEmpty()) {
+                                input.setText(recognized);
+                                input.setSelection(input.length());
+                                Toast.makeText(OverlayService.this,
+                                        "Reconocí: " + recognized + ". Revisá el texto y tocá Traducir.",
+                                        Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(OverlayService.this,
+                                        "No pude reconocer una palabra. Probá de nuevo.",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } else {
+                        main.post(() -> Toast.makeText(OverlayService.this,
+                                "No recibí texto del micrófono. Probá hablar más cerca del micrófono.",
+                                Toast.LENGTH_LONG).show());
+                    }
                 }
             });
             Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, northToArgentine ? "en-US" : "es-AR");
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, northToArgentine ? "en-US" : "es-AR");
-            intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+            intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
             intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
             intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, false);
             recognizer.startListening(intent);
