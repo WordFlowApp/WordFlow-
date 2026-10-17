@@ -149,13 +149,13 @@ public class OverlayService extends Service {
             }
         };
         panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(dp(10), dp(8), dp(10), dp(10));
+        panel.setPadding(dp(12), dp(10), dp(12), dp(12));
         panel.setBackground(rounded(Color.rgb(8, 29, 75)));
-        panel.setElevation(dp(6));
+        panel.setElevation(dp(10));
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = makeText("WordFlow", 20, Color.CYAN);
+        TextView title = makeText("WordFlow", 20, Color.WHITE);
         title.setTypeface(null, Typeface.BOLD);
         header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
         Button minimizeButton = makeButton("—"), closeButton = makeButton("×");
@@ -169,25 +169,40 @@ public class OverlayService extends Service {
 
         LinearLayout inputRow = new LinearLayout(this);
         inputRow.setGravity(Gravity.CENTER_VERTICAL); inputRow.setPadding(dp(6), 0, dp(4), 0);
-        inputRow.setBackground(rounded(Color.rgb(35, 55, 100)));
+        inputRow.setBackground(rounded(Color.rgb(24, 48, 96)));
         input = new EditText(this); input.setHint("Escribí una palabra o frase");
         input.setTextColor(Color.WHITE); input.setHintTextColor(Color.LTGRAY);
         input.setTextSize(15); input.setMinLines(1); input.setMaxLines(3);
+        input.setPadding(dp(8), dp(6), dp(4), dp(6));
         input.setBackgroundColor(Color.TRANSPARENT);
         inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(58), 1));
-        Button mic = makeButton("🎙"); inputRow.addView(mic, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        Button mic = makeButton("🎙");
+        mic.setTextColor(Color.WHITE); mic.setTextSize(17);
+        mic.setBackground(rounded(Color.rgb(41, 112, 218)));
+        inputRow.addView(mic, new LinearLayout.LayoutParams(dp(44), dp(44)));
         panel.addView(inputRow);
 
         LinearLayout actions = new LinearLayout(this);
         Button swap = makeButton("🇺🇸 ⇄ 🇦🇷"), translate = makeButton("Traducir");
-        actions.addView(swap, new LinearLayout.LayoutParams(dp(112), dp(48)));
-        actions.addView(translate, new LinearLayout.LayoutParams(0, dp(48), 1)); panel.addView(actions);
+        swap.setTextColor(Color.WHITE); swap.setBackground(rounded(Color.rgb(27, 63, 124)));
+        translate.setTextColor(Color.WHITE); translate.setBackground(rounded(Color.rgb(35, 130, 255)));
+        LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(108), dp(46)); swapLp.topMargin = dp(8);
+        actions.addView(swap, swapLp);
+        LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(46), 1); translateLp.leftMargin = dp(8); translateLp.topMargin = dp(8);
+        actions.addView(translate, translateLp); panel.addView(actions);
         result = makeText("La traducción aparecerá aquí.", 16, Color.WHITE);
-        result.setPadding(dp(8), dp(12), dp(8), dp(8)); panel.addView(result);
+        result.setPadding(dp(12), dp(14), dp(12), dp(12));
+        result.setBackground(rounded(Color.rgb(19, 43, 87)));
+        LinearLayout.LayoutParams resultLp = new LinearLayout.LayoutParams(-1, -2); resultLp.topMargin = dp(10);
+        panel.addView(result, resultLp);
         LinearLayout output = new LinearLayout(this); output.setGravity(Gravity.CENTER_VERTICAL);
         Button speak = makeButton("🔊 Escuchar"), copy = makeButton("Copiar");
-        output.addView(speak, new LinearLayout.LayoutParams(0, dp(48), 1));
-        output.addView(copy, new LinearLayout.LayoutParams(0, dp(48), 1)); panel.addView(output);
+        speak.setTextColor(Color.WHITE); speak.setBackground(rounded(Color.rgb(27, 63, 124)));
+        copy.setTextColor(Color.WHITE); copy.setBackground(rounded(Color.rgb(27, 63, 124)));
+        LinearLayout.LayoutParams speakLp = new LinearLayout.LayoutParams(0, dp(44), 1); speakLp.topMargin = dp(8);
+        output.addView(speak, speakLp);
+        LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(0, dp(44), 1); copyLp.leftMargin = dp(8); copyLp.topMargin = dp(8);
+        output.addView(copy, copyLp); panel.addView(output);
         TextView hint = makeText("🤏 Pellizcá para cambiar tamaño · Arrastrá arriba para mover", 10, Color.LTGRAY);
         hint.setPadding(0, dp(8), 0, 0); panel.addView(hint);
 
