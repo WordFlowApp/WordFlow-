@@ -18,6 +18,9 @@ jobs:
     name: Build and identify WordFlow APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      WORDFLOW_KEYSTORE_BASE64: ${{ secrets.WORDFLOW_KEYSTORE_BASE64 }}
+      WORDFLOW_KEYSTORE_PASSWORD: ${{ secrets.WORDFLOW_KEYSTORE_PASSWORD }}
 
     steps:
       - name: Checkout exact source revision
@@ -31,6 +34,18 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Prepare persistent beta signing key
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${WORDFLOW_KEYSTORE_BASE64:-}" && -n "${WORDFLOW_KEYSTORE_PASSWORD:-}" ]]; then
+            echo "$WORDFLOW_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/wordflow-beta.jks"
+            echo "WORDFLOW_KEYSTORE_PATH=$RUNNER_TEMP/wordflow-beta.jks" >> "$GITHUB_ENV"
+            echo 'Persistent beta signing key configured.'
+          else
+            echo 'Persistent signing secrets are not configured; this APK will use a temporary debug signature and must not be used for repeat-update testing.'
+          fi
 
       - name: Build debug APK
         uses: gradle/gradle-build-action@v3
@@ -56,6 +71,7 @@ jobs:
             echo "commit=$GITHUB_SHA"
             echo "run=$GITHUB_RUN_NUMBER"
             echo "apk=$OUT"
+            if [[ -n "${WORDFLOW_KEYSTORE_PATH:-}" ]]; then echo 'signing=persistent-beta'; else echo 'signing=temporary-debug'; fi
           } | tee dist/BUILD-INFO.txt
           echo "APK generated from commit $GITHUB_SHA"
 
