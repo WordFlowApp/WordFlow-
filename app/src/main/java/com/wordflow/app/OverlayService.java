@@ -54,7 +54,7 @@ public class OverlayService extends Service {
     private WindowManager.LayoutParams params;
     private LinearLayout panel, inputRow, actionRow, outputRow;
     private EditText input;
-    private TextView result, direction, minimize;
+    private TextView result, minimize, sourceFlag, targetFlag, swap;
     private TextToSpeech tts;
     private SpeechRecognizer recognizer;
     private boolean ttsReady, northToArgentine = true, minimized;
@@ -154,37 +154,27 @@ public class OverlayService extends Service {
         logo.addView(flow);
         header.addView(logo, new LinearLayout.LayoutParams(0, -2, 1));
 
-        minimize = pillButton("−", 24, Color.rgb(16, 112, 220), Color.WHITE);
-        TextView close = pillButton("×", 25, Color.rgb(202, 45, 76), Color.WHITE);
-        header.addView(minimize, new LinearLayout.LayoutParams(dp(39), dp(39)));
-        LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(dp(39), dp(39));
-        closeLp.leftMargin = dp(5);
+        minimize = pillButton("−", 24, Color.rgb(7, 49, 110), CYAN);
+        TextView expand = pillButton("↗", 20, Color.rgb(7, 49, 110), Color.WHITE);
+        TextView close = pillButton("×", 25, Color.rgb(7, 49, 110), Color.WHITE);
+        TextView more = pillButton("⋮", 22, Color.rgb(7, 49, 110), Color.WHITE);
+        header.addView(minimize, new LinearLayout.LayoutParams(dp(36), dp(36)));
+        LinearLayout.LayoutParams expandLp = new LinearLayout.LayoutParams(dp(36), dp(36));
+        expandLp.leftMargin = dp(4);
+        header.addView(expand, expandLp);
+        LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(dp(36), dp(36));
+        closeLp.leftMargin = dp(4);
         header.addView(close, closeLp);
-        TextView grip = text("⠿", 24, Color.WHITE, true);
-        grip.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams gripLp = new LinearLayout.LayoutParams(dp(28), dp(40));
-        gripLp.leftMargin = dp(3);
-        header.addView(grip, gripLp);
+        LinearLayout.LayoutParams moreLp = new LinearLayout.LayoutParams(dp(28), dp(36));
+        moreLp.leftMargin = dp(2);
+        header.addView(more, moreLp);
         panel.addView(header);
-
-        direction = text("🇺🇸  NORTEAMERICANO  →  🇦🇷  ARGENTINO", 12, Color.WHITE, true);
-        direction.setGravity(Gravity.CENTER);
-        direction.setPadding(dp(4), dp(10), dp(4), dp(10));
-        direction.setBackground(shape(Color.rgb(8, 31, 76), 18, Color.rgb(13, 59, 126), 1));
-        LinearLayout.LayoutParams directionLp = new LinearLayout.LayoutParams(-1, -2);
-        directionLp.topMargin = dp(7);
-        panel.addView(direction, directionLp);
-        direction.setOnClickListener(v -> switchDirection());
 
         // Source text field with US flag and microphone.
         inputRow = new LinearLayout(this);
         inputRow.setGravity(Gravity.CENTER_VERTICAL);
         inputRow.setPadding(dp(7), dp(4), dp(5), dp(4));
         inputRow.setBackground(shape(Color.rgb(7, 27, 64), 22, LIGHT_BLUE, 1));
-
-        TextView sourceFlag = text("🇺🇸", 26, Color.WHITE, false);
-        sourceFlag.setGravity(Gravity.CENTER);
-        inputRow.addView(sourceFlag, new LinearLayout.LayoutParams(dp(45), dp(54)));
 
         input = new EditText(this);
         input.setSingleLine(false);
@@ -206,47 +196,60 @@ public class OverlayService extends Service {
 
         actionRow = new LinearLayout(this);
         actionRow.setGravity(Gravity.CENTER_VERTICAL);
-        TextView swap = pillButton("⇄", 27, Color.rgb(13, 54, 119), CYAN);
-        TextView translate = pillButton("⇄  TRADUCIR", 17, Color.rgb(0, 194, 239), NAVY);
-        LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(62), dp(54));
-        swapLp.topMargin = dp(8);
-        actionRow.addView(swap, swapLp);
-        LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(54), 1);
-        translateLp.leftMargin = dp(8);
+        actionRow.setPadding(dp(2), 0, dp(2), 0);
+
+        LinearLayout languages = new LinearLayout(this);
+        languages.setGravity(Gravity.CENTER);
+        languages.setBackground(shape(Color.rgb(4, 25, 62), 28, CYAN, 2));
+        sourceFlag = text("🇺🇸", 30, Color.WHITE, false);
+        sourceFlag.setGravity(Gravity.CENTER);
+        languages.addView(sourceFlag, new LinearLayout.LayoutParams(dp(58), dp(58)));
+        LinearLayout arrows = new LinearLayout(this);
+        arrows.setOrientation(LinearLayout.VERTICAL);
+        arrows.setGravity(Gravity.CENTER);
+        TextView forward = text("➜", 28, Color.rgb(255, 190, 0), true);
+        TextView backward = text("⬅", 28, CYAN, true);
+        forward.setGravity(Gravity.CENTER);
+        backward.setGravity(Gravity.CENTER);
+        arrows.addView(forward, new LinearLayout.LayoutParams(dp(54), dp(26)));
+        arrows.addView(backward, new LinearLayout.LayoutParams(dp(54), dp(26)));
+        languages.addView(arrows);
+        targetFlag = text("🇦🇷", 30, Color.WHITE, false);
+        targetFlag.setGravity(Gravity.CENTER);
+        languages.addView(targetFlag, new LinearLayout.LayoutParams(dp(58), dp(58)));
+
+        TextView translate = pillButton("✦  TRADUCIR", 20, Color.rgb(0, 213, 245), NAVY);
+        translate.setBackground(gradient(Color.rgb(0, 239, 245), Color.rgb(0, 143, 255), 28, CYAN));
+        LinearLayout.LayoutParams languagesLp = new LinearLayout.LayoutParams(0, dp(66), 1.0f);
+        languagesLp.topMargin = dp(8);
+        actionRow.addView(languages, languagesLp);
+        LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(66), 1.15f);
+        translateLp.leftMargin = dp(7);
         translateLp.topMargin = dp(8);
         actionRow.addView(translate, translateLp);
         panel.addView(actionRow);
 
-        // Translation field with Argentina flag and real audio/copy controls.
+        // Translation field and action icons share one row, matching the approved design.
         outputRow = new LinearLayout(this);
         outputRow.setGravity(Gravity.CENTER_VERTICAL);
-        outputRow.setPadding(dp(6), dp(4), dp(4), dp(4));
-        outputRow.setBackground(shape(Color.rgb(7, 27, 64), 22, LIGHT_BLUE, 1));
+        outputRow.setPadding(dp(8), dp(4), dp(4), dp(4));
+        outputRow.setBackground(shape(Color.rgb(4, 23, 56), 24, LIGHT_BLUE, 2));
 
-        TextView targetFlag = text("🇦🇷", 26, Color.WHITE, false);
-        targetFlag.setGravity(Gravity.CENTER);
-        outputRow.addView(targetFlag, new LinearLayout.LayoutParams(dp(45), dp(64)));
-
-        result = text("La traducción aparecerá acá.", 16, Color.WHITE, true);
+        result = text("Aquí aparecerá la traducción…", 16, Color.WHITE, false);
         result.setGravity(Gravity.CENTER_VERTICAL);
         result.setPadding(dp(7), dp(8), dp(5), dp(8));
-        outputRow.addView(result, new LinearLayout.LayoutParams(0, -2, 1));
-        LinearLayout.LayoutParams outputLp = new LinearLayout.LayoutParams(-1, -2);
-        outputLp.topMargin = dp(10);
-        panel.addView(outputRow, outputLp);
+        outputRow.addView(result, new LinearLayout.LayoutParams(0, dp(58), 1));
 
-        LinearLayout tools = new LinearLayout(this);
-        tools.setGravity(Gravity.CENTER_VERTICAL);
-        TextView speak = pillButton("🔊  Escuchar", 14, Color.rgb(20, 61, 126), Color.WHITE);
-        TextView copy = pillButton("▢  Copiar", 14, Color.rgb(20, 61, 126), Color.WHITE);
-        LinearLayout.LayoutParams toolLp = new LinearLayout.LayoutParams(0, dp(43), 1);
-        toolLp.topMargin = dp(8);
-        tools.addView(speak, toolLp);
-        LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(0, dp(43), 1);
-        copyLp.leftMargin = dp(8);
-        copyLp.topMargin = dp(8);
-        tools.addView(copy, copyLp);
-        panel.addView(tools);
+        TextView speak = pillButton("◖))", 21, Color.rgb(0, 115, 255), Color.WHITE);
+        speak.setBackground(gradient(Color.rgb(0, 220, 255), Color.rgb(0, 73, 255), 30, CYAN));
+        outputRow.addView(speak, new LinearLayout.LayoutParams(dp(58), dp(58)));
+        TextView copy = pillButton("▢", 25, Color.rgb(5, 40, 91), Color.WHITE);
+        LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(dp(58), dp(58));
+        copyLp.leftMargin = dp(6);
+        outputRow.addView(copy, copyLp);
+        LinearLayout.LayoutParams outputLp = new LinearLayout.LayoutParams(-1, -2);
+        outputLp.topMargin = dp(9);
+        panel.addView(outputRow, outputLp);
 
         TextView hint = text("⠿  ARRASTRÁ PARA MOVER  ·  🤏  PELLIZCÁ PARA AJUSTAR", 9, Color.rgb(184, 216, 255), false);
         hint.setGravity(Gravity.CENTER);
@@ -284,17 +287,20 @@ public class OverlayService extends Service {
 
         minimize.setOnClickListener(v -> {
             minimized = !minimized;
-            direction.setVisibility(minimized ? View.GONE : View.VISIBLE);
             inputRow.setVisibility(minimized ? View.GONE : View.VISIBLE);
             actionRow.setVisibility(minimized ? View.GONE : View.VISIBLE);
             outputRow.setVisibility(minimized ? View.GONE : View.VISIBLE);
-            tools.setVisibility(minimized ? View.GONE : View.VISIBLE);
             hint.setVisibility(minimized ? View.GONE : View.VISIBLE);
             minimize.setText(minimized ? "+" : "−");
             try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
         });
+        expand.setOnClickListener(v -> {
+            params.width = params.width < screenWidth - dp(16) ? screenWidth - dp(16) : dp(320);
+            try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
+        });
+        more.setOnClickListener(v -> Toast.makeText(this, "WordFlow · Norteamericano ↔ Argentino", Toast.LENGTH_SHORT).show());
         close.setOnClickListener(v -> stopSelf());
-        swap.setOnClickListener(v -> switchDirection());
+        languages.setOnClickListener(v -> switchDirection());
         translate.setOnClickListener(v -> translateText());
         mic.setOnClickListener(v -> startVoiceRecognition());
         speak.setOnClickListener(v -> speakTranslation());
@@ -315,25 +321,38 @@ public class OverlayService extends Service {
 
     private void switchDirection() {
         northToArgentine = !northToArgentine;
-        direction.setText(northToArgentine ? "🇺🇸  NORTEAMERICANO  →  🇦🇷  ARGENTINO" : "🇦🇷  ARGENTINO  →  🇺🇸  NORTEAMERICANO");
-        input.setHint(northToArgentine ? "Escribí en norteamericano…" : "Escribí en argentino…");
+        sourceFlag.setText(northToArgentine ? "🇺🇸" : "🇦🇷");
+        targetFlag.setText(northToArgentine ? "🇦🇷" : "🇺🇸");
+        input.setHint(northToArgentine ? "Escribí una palabra o frase…" : "Escribí una palabra o frase…");
         setSpeechLanguage();
     }
 
     private void startVoiceRecognition() {
         if (Build.VERSION.SDK_INT >= 23 && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Permití el micrófono desde los permisos de Android para WordFlow.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Activá el permiso Micrófono para WordFlow en Ajustes de Android y volvé a tocar el micrófono.", Toast.LENGTH_LONG).show();
+            try {
+                Intent settings = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        android.net.Uri.parse("package:" + getPackageName()));
+                settings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(settings);
+            } catch (Exception ignored) { }
             return;
         }
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            Toast.makeText(this, "El reconocimiento de voz no está disponible en este dispositivo.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Android no tiene un servicio de reconocimiento de voz disponible. Revisá Google app y el servicio de voz.", Toast.LENGTH_LONG).show();
             return;
         }
         try {
-            if (recognizer != null) recognizer.destroy();
-            recognizer = SpeechRecognizer.createSpeechRecognizer(this);
+            if (recognizer != null) {
+                recognizer.cancel();
+                recognizer.destroy();
+                recognizer = null;
+            }
+            recognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
             recognizer.setRecognitionListener(new RecognitionListener() {
-                @Override public void onReadyForSpeech(android.os.Bundle b) { }
+                @Override public void onReadyForSpeech(android.os.Bundle b) {
+                    main.post(() -> Toast.makeText(OverlayService.this, "Te escucho… hablá ahora.", Toast.LENGTH_SHORT).show());
+                }
                 @Override public void onBeginningOfSpeech() { }
                 @Override public void onRmsChanged(float rms) { }
                 @Override public void onBufferReceived(byte[] b) { }
@@ -341,7 +360,7 @@ public class OverlayService extends Service {
                 @Override public void onPartialResults(android.os.Bundle b) { }
                 @Override public void onEvent(int e, android.os.Bundle b) { }
                 @Override public void onError(int error) {
-                    main.post(() -> Toast.makeText(OverlayService.this, "No reconocí la voz. Intentá otra vez.", Toast.LENGTH_SHORT).show());
+                    main.post(() -> Toast.makeText(OverlayService.this, "No se pudo reconocer la voz (código " + error + "). Volvé a tocar el micrófono.", Toast.LENGTH_LONG).show());
                 }
                 @Override public void onResults(android.os.Bundle b) {
                     ArrayList<String> matches = b.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
@@ -354,10 +373,12 @@ public class OverlayService extends Service {
             Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, northToArgentine ? "en-US" : "es-AR");
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, northToArgentine ? "en-US" : "es-AR");
             intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+            intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
             recognizer.startListening(intent);
         } catch (Exception e) {
-            Toast.makeText(this, "No se pudo iniciar el micrófono.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "No se pudo iniciar el micrófono: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
