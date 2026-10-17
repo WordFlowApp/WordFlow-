@@ -2,6 +2,8 @@ plugins {
     id 'com.android.application'
 }
 
+def stableSigningEnabled = System.getenv('WORDFLOW_KEYSTORE_PATH') != null && !System.getenv('WORDFLOW_KEYSTORE_PATH').trim().isEmpty()
+
 android {
     namespace 'com.wordflow.app'
     compileSdk 35
@@ -12,6 +14,25 @@ android {
         targetSdk 35
         versionCode 6
         versionName '0.3.3'
+    }
+
+    signingConfigs {
+        if (stableSigningEnabled) {
+            stableBeta {
+                storeFile file(System.getenv('WORDFLOW_KEYSTORE_PATH'))
+                storePassword System.getenv('WORDFLOW_KEYSTORE_PASSWORD')
+                keyAlias 'wordflowbeta'
+                keyPassword System.getenv('WORDFLOW_KEYSTORE_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            if (stableSigningEnabled) {
+                signingConfig signingConfigs.stableBeta
+            }
+        }
     }
 
     compileOptions {
