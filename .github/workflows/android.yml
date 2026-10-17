@@ -1,4 +1,5 @@
 name: WordFlow Android APK
+# Build after stable-signing secret setup; each artifact records signature mode.
 
 on:
   workflow_dispatch:
