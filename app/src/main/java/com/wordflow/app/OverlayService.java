@@ -150,26 +150,44 @@ public class OverlayService extends Service {
         };
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(dp(12), dp(10), dp(12), dp(12));
-        panel.setBackground(rounded(Color.rgb(8, 29, 75)));
-        panel.setElevation(dp(10));
+        GradientDrawable panelBg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{Color.rgb(9, 49, 125), Color.rgb(4, 19, 54)});
+        panelBg.setCornerRadius(dp(22));
+        panelBg.setStroke(dp(2), Color.rgb(50, 157, 255));
+        panel.setBackground(panelBg);
+        panel.setElevation(dp(14));
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = makeText("WordFlow", 20, Color.WHITE);
+        header.setPadding(dp(10), dp(5), dp(4), dp(5));
+        GradientDrawable headerBg = rounded(Color.rgb(20, 93, 190));
+        header.setBackground(headerBg);
+        TextView title = makeText("🌐  WordFlow", 21, Color.WHITE);
         title.setTypeface(null, Typeface.BOLD);
         header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
         Button minimizeButton = makeButton("—"), closeButton = makeButton("×");
-        header.addView(minimizeButton, new LinearLayout.LayoutParams(dp(44), dp(42)));
-        header.addView(closeButton, new LinearLayout.LayoutParams(dp(44), dp(42)));
+        minimizeButton.setTextColor(Color.WHITE); minimizeButton.setTextSize(20);
+        minimizeButton.setBackground(rounded(Color.rgb(35, 118, 218)));
+        closeButton.setTextColor(Color.WHITE); closeButton.setTextSize(22);
+        closeButton.setBackground(rounded(Color.rgb(204, 55, 77)));
+        LinearLayout.LayoutParams minLp = new LinearLayout.LayoutParams(dp(40), dp(40));
+        minLp.leftMargin = dp(4); header.addView(minimizeButton, minLp);
+        LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(dp(40), dp(40));
+        closeLp.leftMargin = dp(4); header.addView(closeButton, closeLp);
         panel.addView(header);
 
-        direction = makeText("🇺🇸 Norteamericano → 🇦🇷 Argentino", 13, Color.rgb(255, 220, 90));
-        direction.setGravity(Gravity.CENTER); direction.setPadding(0, dp(8), 0, dp(8));
+        direction = makeText("🇺🇸  NORTEAMERICANO   ➜   🇦🇷  ARGENTINO", 12, Color.WHITE);
+        direction.setTypeface(null, Typeface.BOLD);
+        direction.setGravity(Gravity.CENTER);
+        direction.setPadding(dp(6), dp(11), dp(6), dp(11));
+        direction.setBackground(rounded(Color.rgb(15, 39, 88)));
         panel.addView(direction); direction.setOnClickListener(v -> switchDirection());
 
         LinearLayout inputRow = new LinearLayout(this);
-        inputRow.setGravity(Gravity.CENTER_VERTICAL); inputRow.setPadding(dp(6), 0, dp(4), 0);
-        inputRow.setBackground(rounded(Color.rgb(24, 48, 96)));
+        inputRow.setGravity(Gravity.CENTER_VERTICAL); inputRow.setPadding(dp(8), 0, dp(6), 0);
+        GradientDrawable inputBg = rounded(Color.rgb(10, 30, 68));
+        inputBg.setStroke(dp(1), Color.rgb(75, 167, 255));
+        inputRow.setBackground(inputBg);
         input = new EditText(this); input.setHint("Escribí una palabra o frase");
         input.setTextColor(Color.WHITE); input.setHintTextColor(Color.LTGRAY);
         input.setTextSize(15); input.setMinLines(1); input.setMaxLines(3);
@@ -183,16 +201,19 @@ public class OverlayService extends Service {
         panel.addView(inputRow);
 
         LinearLayout actions = new LinearLayout(this);
-        Button swap = makeButton("🇺🇸 ⇄ 🇦🇷"), translate = makeButton("Traducir");
+        Button swap = makeButton("🇺🇸  ⇄  🇦🇷"), translate = makeButton("✦  TRADUCIR");
         swap.setTextColor(Color.WHITE); swap.setBackground(rounded(Color.rgb(27, 63, 124)));
-        translate.setTextColor(Color.WHITE); translate.setBackground(rounded(Color.rgb(35, 130, 255)));
+        translate.setTextColor(Color.WHITE); translate.setTypeface(null, Typeface.BOLD);
+        translate.setBackground(rounded(Color.rgb(0, 132, 255)));
         LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(108), dp(46)); swapLp.topMargin = dp(8);
         actions.addView(swap, swapLp);
         LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(46), 1); translateLp.leftMargin = dp(8); translateLp.topMargin = dp(8);
         actions.addView(translate, translateLp); panel.addView(actions);
-        result = makeText("La traducción aparecerá aquí.", 16, Color.WHITE);
-        result.setPadding(dp(12), dp(14), dp(12), dp(12));
-        result.setBackground(rounded(Color.rgb(19, 43, 87)));
+        result = makeText("¡La traducción aparece acá!\n\nLa traducción aparecerá aquí.", 16, Color.WHITE);
+        result.setPadding(dp(14), dp(16), dp(14), dp(14));
+        GradientDrawable resultBg = rounded(Color.rgb(12, 35, 79));
+        resultBg.setStroke(dp(1), Color.rgb(47, 126, 226));
+        result.setBackground(resultBg);
         LinearLayout.LayoutParams resultLp = new LinearLayout.LayoutParams(-1, -2); resultLp.topMargin = dp(10);
         panel.addView(result, resultLp);
         LinearLayout output = new LinearLayout(this); output.setGravity(Gravity.CENTER_VERTICAL);
@@ -203,7 +224,7 @@ public class OverlayService extends Service {
         output.addView(speak, speakLp);
         LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(0, dp(44), 1); copyLp.leftMargin = dp(8); copyLp.topMargin = dp(8);
         output.addView(copy, copyLp); panel.addView(output);
-        TextView hint = makeText("🤏 Pellizcá para cambiar tamaño · Arrastrá arriba para mover", 10, Color.LTGRAY);
+        TextView hint = makeText("⠿  ARRASTRÁ PARA MOVER   ·   🤏  PELLIZCÁ PARA AJUSTAR", 9, Color.rgb(184, 216, 255));
         hint.setPadding(0, dp(8), 0, 0); panel.addView(hint);
 
         int type = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
