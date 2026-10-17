@@ -19,8 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      WORDFLOW_KEYSTORE_BASE64: ${{ secrets.WORDFLOW_KEYSTORE_BASE64 }}
-      WORDFLOW_KEYSTORE_PASSWORD: ${{ secrets.WORDFLOW_KEYSTORE_PASSWORD }}
+      WORDFLOW_SIGNING_BUNDLE: ${{ secrets.WORDFLOW_SIGNING_BUNDLE }}
 
     steps:
       - name: Checkout exact source revision
@@ -39,14 +38,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -n "${WORDFLOW_KEYSTORE_BASE64:-}" && -n "${WORDFLOW_KEYSTORE_PASSWORD:-}" ]]; then
-            echo "$WORDFLOW_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/wordflow-beta.jks"
+          if [[ -n "${WORDFLOW_SIGNING_BUNDLE:-}" && "$WORDFLOW_SIGNING_BUNDLE" == *'|'* ]]; then
+            KEYSTORE_B64="${WORDFLOW_SIGNING_BUNDLE%%|*}"
+            KEYSTORE_PASSWORD="${WORDFLOW_SIGNING_BUNDLE#*|}"
+            echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/wordflow-beta.jks"
             echo "WORDFLOW_KEYSTORE_PATH=$RUNNER_TEMP/wordflow-beta.jks" >> "$GITHUB_ENV"
+            echo "WORDFLOW_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
             echo 'Persistent beta signing key configured.'
           else
-            echo 'Persistent signing secrets are not configured; this APK will use a temporary debug signature and must not be used for repeat-update testing.'
+            echo 'Persistent signing secret is not configured; this APK will use a temporary debug signature and must not be used for repeat-update testing.'
           fi
-
       - name: Build debug APK
         uses: gradle/gradle-build-action@v3
         with:
