@@ -25,6 +25,7 @@ import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.ViewConfiguration;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -61,6 +62,50 @@ public class OverlayService extends Service {
     private int screenWidth, screenHeight;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final Handler main = new Handler(Looper.getMainLooper());
+
+    private class FloatingPanel extends LinearLayout {
+        private float pinchStartDistance;
+        private int pinchStartWidth;
+        private boolean pinching;
+
+        FloatingPanel(Context context) { super(context); }
+
+        private float distance(MotionEvent e) {
+            if (e.getPointerCount() < 2) return 0f;
+            float dx = e.getX(0) - e.getX(1);
+            float dy = e.getY(0) - e.getY(1);
+            return (float) Math.sqrt(dx * dx + dy * dy);
+        }
+
+        @Override public boolean dispatchTouchEvent(MotionEvent event) {
+            if (event.getPointerCount() >= 2 || pinching) {
+                int action = event.getActionMasked();
+                if (action == MotionEvent.ACTION_POINTER_DOWN) {
+                    pinchStartDistance = distance(event);
+                    pinchStartWidth = params != null && params.width > 0 ? params.width : getWidth();
+                    pinching = true;
+                    return true;
+                }
+                if (action == MotionEvent.ACTION_MOVE && pinching) {
+                    float current = distance(event);
+                    if (pinchStartDistance > 0f && current > 0f && params != null) {
+                        float factor = current / pinchStartDistance;
+                        int minWidth = dp(285);
+                        int maxWidth = screenWidth - dp(16);
+                        params.width = Math.max(minWidth, Math.min(maxWidth, (int)(pinchStartWidth * factor)));
+                        try { wm.updateViewLayout(this, params); } catch (Exception ignored) { }
+                    }
+                    return true;
+                }
+                if (action == MotionEvent.ACTION_POINTER_UP || action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                    pinching = false;
+                    return true;
+                }
+                if (pinching) return true;
+            }
+            return super.dispatchTouchEvent(event);
+        }
+    }
 
     private int dp(float v) {
         return (int) (v * getResources().getDisplayMetrics().density + 0.5f);
@@ -134,7 +179,7 @@ public class OverlayService extends Service {
     }
 
     private void showPanel() {
-        panel = new LinearLayout(this);
+        panel = new FloatingPanel(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(dp(10), dp(9), dp(10), dp(9));
         panel.setBackground(gradient(Color.rgb(7, 43, 108), NAVY, 24, LIGHT_BLUE));
@@ -189,6 +234,7 @@ public class OverlayService extends Service {
         inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(58), 1));
 
         TextView mic = pillButton("🎙", 20, BLUE, Color.WHITE);
+        mic.setContentDescription("Dictar por voz");
         inputRow.addView(mic, new LinearLayout.LayoutParams(dp(46), dp(46)));
         LinearLayout.LayoutParams inputLp = new LinearLayout.LayoutParams(-1, -2);
         inputLp.topMargin = dp(8);
@@ -201,29 +247,35 @@ public class OverlayService extends Service {
         LinearLayout languages = new LinearLayout(this);
         languages.setGravity(Gravity.CENTER);
         languages.setBackground(shape(Color.rgb(4, 25, 62), 28, CYAN, 2));
-        sourceFlag = text("🇺🇸", 30, Color.WHITE, false);
+        sourceFlag = text("🇺🇸", 28, Color.WHITE, false);
         sourceFlag.setGravity(Gravity.CENTER);
-        languages.addView(sourceFlag, new LinearLayout.LayoutParams(dp(58), dp(58)));
+        sourceFlag.setBackground(gradient(Color.rgb(0, 126, 255), Color.rgb(4, 35, 91), 40, CYAN));
+        languages.addView(sourceFlag, new LinearLayout.LayoutParams(dp(48), dp(48)));
         LinearLayout arrows = new LinearLayout(this);
         arrows.setOrientation(LinearLayout.VERTICAL);
         arrows.setGravity(Gravity.CENTER);
-        TextView forward = text("➜", 28, Color.rgb(255, 190, 0), true);
-        TextView backward = text("⬅", 28, CYAN, true);
+        TextView forward = text("➜", 21, Color.rgb(255, 205, 0), true);
+        TextView backward = text("⬅", 21, CYAN, true);
         forward.setGravity(Gravity.CENTER);
         backward.setGravity(Gravity.CENTER);
-        arrows.addView(forward, new LinearLayout.LayoutParams(dp(54), dp(26)));
-        arrows.addView(backward, new LinearLayout.LayoutParams(dp(54), dp(26)));
+        forward.setBackground(gradient(Color.rgb(5, 53, 119), Color.rgb(4, 28, 69), 30, Color.rgb(255, 205, 0)));
+        backward.setBackground(gradient(Color.rgb(5, 53, 119), Color.rgb(4, 28, 69), 30, CYAN));
+        LinearLayout.LayoutParams arrowLp1 = new LinearLayout.LayoutParams(dp(32), dp(32));
+        arrowLp1.bottomMargin = dp(2);
+        arrows.addView(forward, arrowLp1);
+        arrows.addView(backward, new LinearLayout.LayoutParams(dp(32), dp(32)));
         languages.addView(arrows);
-        targetFlag = text("🇦🇷", 30, Color.WHITE, false);
+        targetFlag = text("🇦🇷", 28, Color.WHITE, false);
         targetFlag.setGravity(Gravity.CENTER);
-        languages.addView(targetFlag, new LinearLayout.LayoutParams(dp(58), dp(58)));
+        targetFlag.setBackground(gradient(Color.rgb(0, 126, 255), Color.rgb(4, 35, 91), 40, CYAN));
+        languages.addView(targetFlag, new LinearLayout.LayoutParams(dp(48), dp(48)));
 
         TextView translate = pillButton("✦  TRADUCIR", 20, Color.rgb(0, 213, 245), NAVY);
         translate.setBackground(gradient(Color.rgb(0, 239, 245), Color.rgb(0, 143, 255), 28, CYAN));
-        LinearLayout.LayoutParams languagesLp = new LinearLayout.LayoutParams(0, dp(66), 1.0f);
+        LinearLayout.LayoutParams languagesLp = new LinearLayout.LayoutParams(0, dp(74), 1.0f);
         languagesLp.topMargin = dp(8);
         actionRow.addView(languages, languagesLp);
-        LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(66), 1.15f);
+        LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(74), 1.15f);
         translateLp.leftMargin = dp(7);
         translateLp.topMargin = dp(8);
         actionRow.addView(translate, translateLp);
@@ -348,7 +400,8 @@ public class OverlayService extends Service {
                 recognizer.destroy();
                 recognizer = null;
             }
-            recognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
+            recognizer = SpeechRecognizer.createSpeechRecognizer(OverlayService.this);
+            Toast.makeText(this, "Micrófono activado: hablá ahora.", Toast.LENGTH_SHORT).show();
             recognizer.setRecognitionListener(new RecognitionListener() {
                 @Override public void onReadyForSpeech(android.os.Bundle b) {
                     main.post(() -> Toast.makeText(OverlayService.this, "Te escucho… hablá ahora.", Toast.LENGTH_SHORT).show());
@@ -360,14 +413,30 @@ public class OverlayService extends Service {
                 @Override public void onPartialResults(android.os.Bundle b) { }
                 @Override public void onEvent(int e, android.os.Bundle b) { }
                 @Override public void onError(int error) {
-                    main.post(() -> Toast.makeText(OverlayService.this, "No se pudo reconocer la voz (código " + error + "). Volvé a tocar el micrófono.", Toast.LENGTH_LONG).show());
+                    String reason;
+                    switch (error) {
+                        case SpeechRecognizer.ERROR_AUDIO: reason = "Error de audio"; break;
+                        case SpeechRecognizer.ERROR_CLIENT: reason = "Error del servicio de voz"; break;
+                        case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS: reason = "Falta permiso de micrófono"; break;
+                        case SpeechRecognizer.ERROR_NETWORK: reason = "Error de conexión"; break;
+                        case SpeechRecognizer.ERROR_NETWORK_TIMEOUT: reason = "Se agotó el tiempo de conexión"; break;
+                        case SpeechRecognizer.ERROR_NO_MATCH: reason = "No detecté palabras"; break;
+                        case SpeechRecognizer.ERROR_RECOGNIZER_BUSY: reason = "El reconocimiento está ocupado"; break;
+                        case SpeechRecognizer.ERROR_SERVER: reason = "Falló el servicio de voz"; break;
+                        case SpeechRecognizer.ERROR_SPEECH_TIMEOUT: reason = "No detecté voz; hablá enseguida de tocar el micrófono"; break;
+                        default: reason = "Error de reconocimiento";
+                    }
+                    final String message = reason;
+                    main.post(() -> Toast.makeText(OverlayService.this, message, Toast.LENGTH_LONG).show());
                 }
                 @Override public void onResults(android.os.Bundle b) {
                     ArrayList<String> matches = b.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                     if (matches != null && !matches.isEmpty()) main.post(() -> {
                         input.setText(matches.get(0));
                         input.setSelection(input.length());
+                        Toast.makeText(OverlayService.this, "Voz convertida a texto", Toast.LENGTH_SHORT).show();
                     });
+                    else main.post(() -> Toast.makeText(OverlayService.this, "No se reconocieron palabras. Probá hablar más cerca del micrófono.", Toast.LENGTH_LONG).show());
                 }
             });
             Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -376,6 +445,7 @@ public class OverlayService extends Service {
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, northToArgentine ? "en-US" : "es-AR");
             intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
             intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+            intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, false);
             recognizer.startListening(intent);
         } catch (Exception e) {
             Toast.makeText(this, "No se pudo iniciar el micrófono: " + e.getMessage(), Toast.LENGTH_LONG).show();
