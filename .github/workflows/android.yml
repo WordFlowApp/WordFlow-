@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - wordflow2-clean-start
   pull_request:
     branches:
       - main
