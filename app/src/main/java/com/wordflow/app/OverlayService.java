@@ -412,38 +412,43 @@ public class OverlayService extends Service {
     private void updateDirection() {
         if (direction == null) return;
         direction.removeAllViews();
-        Button argentina = circularLanguageButton("🇦🇷", Color.rgb(8, 75, 151), 24);
-        Button usa = circularLanguageButton("🇺🇸", Color.rgb(8, 75, 151), 24);
-        Button right = circularLanguageButton("➜", Color.rgb(255, 205, 0), 23);
-        right.setTextColor(Color.rgb(7, 35, 80));
-        Button left = circularLanguageButton("←", Color.rgb(8, 75, 151), 21);
-        LinearLayout arrows = new LinearLayout(this);
-        arrows.setOrientation(LinearLayout.VERTICAL);
-        arrows.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams arrowLp = new LinearLayout.LayoutParams(dp(36), dp(34));
-        arrows.addView(right, arrowLp);
-        LinearLayout.LayoutParams arrowLp2 = new LinearLayout.LayoutParams(dp(36), dp(30));
-        arrowLp2.topMargin = dp(2);
-        arrows.addView(left, arrowLp2);
+
+        // Keep the visual source -> target order synchronized with the actual
+        // translation pair used by translateText(): en|es or es|en.
+        final boolean toArgentine = northToArgentine;
+        Button sourceFlag = circularLanguageButton(toArgentine ? "🇺🇸" : "🇦🇷",
+                Color.rgb(8, 75, 151), 24);
+        Button targetFlag = circularLanguageButton(toArgentine ? "🇦🇷" : "🇺🇸",
+                Color.rgb(8, 75, 151), 24);
+        sourceFlag.setContentDescription(toArgentine
+                ? "Idioma de origen: norteamericano. Tocar para cambiar a argentino."
+                : "Idioma de origen: argentino. Tocar para cambiar a norteamericano.");
+        targetFlag.setContentDescription(toArgentine
+                ? "Idioma de destino: argentino. Tocar para cambiar a norteamericano."
+                : "Idioma de destino: norteamericano. Tocar para cambiar a argentino.");
+
+        Button swap = circularLanguageButton("⇄", Color.rgb(0, 190, 235), 27);
+        swap.setTextColor(Color.rgb(7, 35, 80));
+        swap.setContentDescription("Invertir dirección de traducción");
         LinearLayout.LayoutParams flagLp = new LinearLayout.LayoutParams(dp(48), dp(48));
-        LinearLayout.LayoutParams arrowsLp = new LinearLayout.LayoutParams(dp(38), dp(66));
-        direction.addView(argentina, flagLp);
-        direction.addView(arrows, arrowsLp);
-        direction.addView(usa, new LinearLayout.LayoutParams(dp(48), dp(48)));
-        argentina.setOnClickListener(v -> {
-            setDirection(false);
-            Toast.makeText(this, "Dirección: ARGENTINO → NORTEAMERICANO", Toast.LENGTH_SHORT).show();
-        });
-        usa.setOnClickListener(v -> {
-            setDirection(true);
-            Toast.makeText(this, "Dirección: NORTEAMERICANO → ARGENTINO", Toast.LENGTH_SHORT).show();
-        });
-        right.setOnClickListener(v -> setDirection(false));
-        left.setOnClickListener(v -> setDirection(true));
-        argentina.setAlpha(northToArgentine ? 0.72f : 1f);
-        usa.setAlpha(northToArgentine ? 1f : 0.72f);
-        right.setAlpha(northToArgentine ? 0.45f : 1f);
-        left.setAlpha(northToArgentine ? 1f : 0.45f);
+        LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(48), dp(48));
+        swapLp.leftMargin = dp(8);
+        swapLp.rightMargin = dp(8);
+
+        direction.addView(sourceFlag, flagLp);
+        direction.addView(swap, swapLp);
+        direction.addView(targetFlag, new LinearLayout.LayoutParams(dp(48), dp(48)));
+
+        View.OnClickListener invert = v -> {
+            setDirection(!northToArgentine);
+            Toast.makeText(this, northToArgentine
+                    ? "Dirección: NORTEAMERICANO → ARGENTINO"
+                    : "Dirección: ARGENTINO → NORTEAMERICANO",
+                    Toast.LENGTH_SHORT).show();
+        };
+        sourceFlag.setOnClickListener(invert);
+        targetFlag.setOnClickListener(invert);
+        swap.setOnClickListener(invert);
     }
 
     private void startVoiceRecognition() {
