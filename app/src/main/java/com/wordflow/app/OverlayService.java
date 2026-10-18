@@ -337,7 +337,7 @@ public class OverlayService extends Service {
                 }
                 JSONObject json = new JSONObject(response.toString());
                 String translated = json.getJSONObject("responseData").getString("translatedText");
-                final String finalText = toArgentine ? localizeArgentineSpanish(translated) : translated;
+                final String finalText = toArgentine ? localizeArgentineSpanish(source, translated) : translated;
                 main.post(() -> result.setText(finalText));
             } catch (Exception e) {
                 main.post(() -> result.setText("No se pudo traducir. Revisá internet e intentá otra vez."));
@@ -345,44 +345,55 @@ public class OverlayService extends Service {
         });
     }
 
-    // First-pass Argentine Spanish localization. This is a conservative phrase layer
-    // over the generic translator, not a replacement for context-aware translation.
-    private String localizeArgentineSpanish(String text) {
-        if (text == null || text.isEmpty()) return text;
-        String value = text;
-        String[][] phrases = {
-            {"¿Qué estás haciendo?", "¿Qué estás haciendo?"},
-            {"What are you doing", "¿Qué estás haciendo"},
-            {"How are you", "¿Cómo andás"},
-            {"What's up", "¿Qué onda"},
-            {"No problem", "No hay drama"},
-            {"Let's go", "Dale, vamos"},
-            {"Come on", "Dale"},
-            {"That's awesome", "¡Está buenísimo!"},
-            {"That's cool", "¡Está buenísimo!"},
-            {"I don't care", "Me da lo mismo"},
-            {"I don't understand", "No entiendo"},
-            {"Wait a minute", "Bancame un segundo"},
-            {"Give me a second", "Bancame un segundo"},
-            {"I'm tired", "Estoy cansado"},
-            {"I'm hungry", "Tengo hambre"},
-            {"I'm broke", "Estoy sin un mango"},
-            {"money", "plata"},
-            {"work", "laburo"},
-            {"friend", "amigo"},
-            {"friends", "amigos"},
-            {"guy", "tipo"},
-            {"guys", "gente"},
-            {"awesome", "buenísimo"},
-            {"cool", "copado"},
-            {"okay", "dale"},
-            {"OK", "dale"}
-        };
-        for (String[] pair : phrases) {
-            value = value.replaceAll("(?i)" + java.util.regex.Pattern.quote(pair[0]),
-                    java.util.regex.Matcher.quoteReplacement(pair[1]));
+    // Conservative phrase overrides keyed to the original English input.
+    // Generic translated Spanish is never searched for isolated English words:
+    // that could corrupt words such as "homework" or change the intended meaning.
+    private String localizeArgentineSpanish(String source, String translated) {
+        if (source == null || translated == null) return translated;
+        String normalized = source.trim().toLowerCase(Locale.US)
+                .replaceAll("[.!?]+$", "").trim();
+        switch (normalized) {
+            case "how are you":
+            case "how are you doing":
+                return "¿Cómo andás?";
+            case "what's up":
+            case "whats up":
+                return "¿Qué onda?";
+            case "what are you doing":
+                return "¿Qué estás haciendo?";
+            case "no problem":
+                return "No hay drama.";
+            case "let's go":
+            case "lets go":
+                return "Dale, vamos.";
+            case "come on":
+                return "Dale.";
+            case "that's awesome":
+            case "thats awesome":
+            case "that's cool":
+            case "thats cool":
+                return "¡Está buenísimo!";
+            case "i don't care":
+            case "i dont care":
+                return "Me da lo mismo.";
+            case "wait a minute":
+            case "give me a second":
+                return "Bancame un segundo.";
+            case "i'm broke":
+            case "im broke":
+                return "Estoy sin un mango.";
+            case "money":
+                return "Plata";
+            case "work":
+                return "Laburo";
+            case "cool":
+                return "Copado";
+            case "okay":
+            case "ok":
+                return "Dale";
+            default:
+                return translated;
         }
-        return value;
     }
 
     private void setSpeechLanguage() {
