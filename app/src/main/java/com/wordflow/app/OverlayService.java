@@ -337,12 +337,52 @@ public class OverlayService extends Service {
                 }
                 JSONObject json = new JSONObject(response.toString());
                 String translated = json.getJSONObject("responseData").getString("translatedText");
-                final String finalText = translated;
+                final String finalText = toArgentine ? localizeArgentineSpanish(translated) : translated;
                 main.post(() -> result.setText(finalText));
             } catch (Exception e) {
                 main.post(() -> result.setText("No se pudo traducir. Revisá internet e intentá otra vez."));
             } finally { if (connection != null) connection.disconnect(); }
         });
+    }
+
+    // First-pass Argentine Spanish localization. This is a conservative phrase layer
+    // over the generic translator, not a replacement for context-aware translation.
+    private String localizeArgentineSpanish(String text) {
+        if (text == null || text.isEmpty()) return text;
+        String value = text;
+        String[][] phrases = {
+            {"¿Qué estás haciendo?", "¿Qué estás haciendo?"},
+            {"What are you doing", "¿Qué estás haciendo"},
+            {"How are you", "¿Cómo andás"},
+            {"What's up", "¿Qué onda"},
+            {"No problem", "No hay drama"},
+            {"Let's go", "Dale, vamos"},
+            {"Come on", "Dale"},
+            {"That's awesome", "¡Está buenísimo!"},
+            {"That's cool", "¡Está buenísimo!"},
+            {"I don't care", "Me da lo mismo"},
+            {"I don't understand", "No entiendo"},
+            {"Wait a minute", "Bancame un segundo"},
+            {"Give me a second", "Bancame un segundo"},
+            {"I'm tired", "Estoy cansado"},
+            {"I'm hungry", "Tengo hambre"},
+            {"I'm broke", "Estoy sin un mango"},
+            {"money", "plata"},
+            {"work", "laburo"},
+            {"friend", "amigo"},
+            {"friends", "amigos"},
+            {"guy", "tipo"},
+            {"guys", "gente"},
+            {"awesome", "buenísimo"},
+            {"cool", "copado"},
+            {"okay", "dale"},
+            {"OK", "dale"}
+        };
+        for (String[] pair : phrases) {
+            value = value.replaceAll("(?i)" + java.util.regex.Pattern.quote(pair[0]),
+                    java.util.regex.Matcher.quoteReplacement(pair[1]));
+        }
+        return value;
     }
 
     private void setSpeechLanguage() {
