@@ -143,7 +143,10 @@ public class OverlayService extends Service {
                         float scale = d / initialDistance;
                         // Resize the width while allowing the panel height to
                         // wrap its content; a fixed height clipped the buttons.
-                        params.width = Math.max(dp(230), Math.min(screenWidth - dp(16), (int)(initialWidth * scale)));
+                        int screenWidthDp = (int)(screenWidth / getResources().getDisplayMetrics().density);
+                        int minWidth = dp(Math.max(190, screenWidthDp * 0.48f));
+                        int maxWidth = dp(Math.max(220, screenWidthDp * 0.72f));
+                        params.width = Math.max(minWidth, Math.min(maxWidth, (int)(initialWidth * scale)));
                         params.height = WindowManager.LayoutParams.WRAP_CONTENT;
                         try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
                     }
@@ -272,10 +275,15 @@ public class OverlayService extends Service {
         hint.setPadding(0, dp(8), 0, 0); panel.addView(hint);
 
         int type = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
-        params = new WindowManager.LayoutParams(dp(320), WindowManager.LayoutParams.WRAP_CONTENT, type,
+        // Start compact: target about one quarter of the phone's visible area.
+        // Width is responsive to screen size and deliberately capped so the overlay
+        // does not cover the video like the previous near-half-screen layout.
+        int screenWidthDp = (int)(screenWidth / getResources().getDisplayMetrics().density);
+        int initialWidthDp = Math.max(210, Math.min(260, (int)(screenWidthDp * 0.62f)));
+        params = new WindowManager.LayoutParams(dp(initialWidthDp), WindowManager.LayoutParams.WRAP_CONTENT, type,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.TOP | Gravity.START; params.x = dp(12); params.y = dp(120);
+        params.gravity = Gravity.TOP | Gravity.START; params.x = dp(8); params.y = dp(96);
 
         header.setOnTouchListener(new View.OnTouchListener() {
             float downX, downY; int startX, startY;
