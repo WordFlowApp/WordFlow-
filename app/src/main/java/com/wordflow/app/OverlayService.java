@@ -24,10 +24,13 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.text.SpannableString;
+import android.text.Html;
+import android.util.TypedValue;
 import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -42,11 +45,36 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class OverlayService extends Service {
+    private static final class ViewMetrics {
+        final int paddingLeft, paddingTop, paddingRight, paddingBottom;
+        final float textSizePx;
+        final int width, height;
+        final int leftMargin, topMargin, rightMargin, bottomMargin;
+        ViewMetrics(View view) {
+            paddingLeft = view.getPaddingLeft();
+            paddingTop = view.getPaddingTop();
+            paddingRight = view.getPaddingRight();
+            paddingBottom = view.getPaddingBottom();
+            textSizePx = view instanceof TextView ? ((TextView) view).getTextSize() : -1f;
+            ViewGroup.LayoutParams raw = view.getLayoutParams();
+            width = raw == null ? 0 : raw.width;
+            height = raw == null ? 0 : raw.height;
+            if (raw instanceof LinearLayout.LayoutParams) {
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) raw;
+                leftMargin = lp.leftMargin; topMargin = lp.topMargin;
+                rightMargin = lp.rightMargin; bottomMargin = lp.bottomMargin;
+            } else {
+                leftMargin = topMargin = rightMargin = bottomMargin = 0;
+            }
+        }
+    }
     private WindowManager wm;
     private WindowManager.LayoutParams params;
     private LinearLayout panel;
@@ -57,6 +85,8 @@ public class OverlayService extends Service {
     private SpeechRecognizer recognizer;
     private boolean ttsReady, northToArgentine = true, minimized;
     private int screenWidth, screenHeight;
+    private float currentUiScale = 1f;
+    private final Map<View, ViewMetrics> baselineMetrics = new IdentityHashMap<>();
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final Handler main = new Handler(Looper.getMainLooper());
 
@@ -118,7 +148,8 @@ public class OverlayService extends Service {
     private void showPanel() {
         panel = new LinearLayout(this) {
             float initialDistance;
-            int initialWidth;
+            float gestureStartScale = 1f;
+            int baseWidth;
             boolean resizing;
             float distance(MotionEvent e) {
                 if (e.getPointerCount() < 2) return 0;
@@ -129,19 +160,24 @@ public class OverlayService extends Service {
                 int a = e.getActionMasked();
                 if (a == MotionEvent.ACTION_POINTER_DOWN && e.getPointerCount() >= 2) {
                     initialDistance = distance(e);
-                    initialWidth = params.width;
+                    gestureStartScale = currentUiScale;
+                    baseWidth = dp(320);
                     resizing = initialDistance > 0;
                     return resizing;
                 }
                 if (resizing && a == MotionEvent.ACTION_MOVE && e.getPointerCount() >= 2) {
                     float d = distance(e);
                     if (initialDistance > 0 && d > 0) {
-                        int minWidth = dp(250);
-                        int maxWidth = Math.max(minWidth, screenWidth - dp(16));
-                        int requestedWidth = Math.round(initialWidth * d / initialDistance);
-                        params.width = Math.max(minWidth, Math.min(maxWidth, requestedWidth));
-                        params.height = WindowManager.LayoutParams.WRAP_CONTENT;
-                        try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
+                        float requested = Math.max(0.72f, Math.min(1.38f,
+                                gestureStartScale * d / initialDistance));
+                        if (Math.abs(requested - currentUiScale) > 0.005f) {
+                            currentUiScale = requested;
+                            applyUiScale(currentUiScale);
+                            params.width = Math.max(dp(250), Math.min(screenWidth - dp(16),
+                                    Math.round(baseWidth * currentUiScale)));
+                            params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                            try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
+                        }
                     }
                     return true;
                 }
@@ -314,7 +350,41 @@ public class OverlayService extends Service {
             cb.setPrimaryClip(ClipData.newPlainText("WordFlow", translated));
             Toast.makeText(this, "Texto copiado", Toast.LENGTH_SHORT).show();
         });
+        captureBaselineMetrics(panel);
         try { wm.addView(panel, params); } catch (Exception e) { stopSelf(); }
+    }
+
+    private void captureBaselineMetrics(View view) {
+        baselineMetrics.put(view, new ViewMetrics(view));
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) captureBaselineMetrics(group.getChildAt(i));
+        }
+    }
+
+    private void applyUiScale(float scale) {
+        for (Map.Entry<View, ViewMetrics> entry : baselineMetrics.entrySet()) {
+            View view = entry.getKey();
+            ViewMetrics m = entry.getValue();
+            view.setPadding(Math.round(m.paddingLeft * scale), Math.round(m.paddingTop * scale),
+                    Math.round(m.paddingRight * scale), Math.round(m.paddingBottom * scale));
+            if (view instanceof TextView && m.textSizePx > 0) {
+                ((TextView) view).setTextSize(TypedValue.COMPLEX_UNIT_PX, m.textSizePx * scale);
+            }
+            ViewGroup.LayoutParams raw = view.getLayoutParams();
+            if (raw != null) {
+                if (m.width > 0) raw.width = Math.max(dp(20), Math.round(m.width * scale));
+                if (m.height > 0) raw.height = Math.max(dp(20), Math.round(m.height * scale));
+                if (raw instanceof LinearLayout.LayoutParams) {
+                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) raw;
+                    lp.leftMargin = Math.round(m.leftMargin * scale);
+                    lp.topMargin = Math.round(m.topMargin * scale);
+                    lp.rightMargin = Math.round(m.rightMargin * scale);
+                    lp.bottomMargin = Math.round(m.bottomMargin * scale);
+                }
+                view.setLayoutParams(raw);
+            }
+        }
     }
 
     private void switchDirection() {
@@ -359,12 +429,20 @@ public class OverlayService extends Service {
         direction.addView(argentina, flagLp);
         direction.addView(arrows, arrowsLp);
         direction.addView(usa, new LinearLayout.LayoutParams(dp(48), dp(48)));
-        argentina.setOnClickListener(v -> setDirection(false));
-        usa.setOnClickListener(v -> setDirection(true));
+        argentina.setOnClickListener(v -> {
+            setDirection(false);
+            Toast.makeText(this, "Dirección: ARGENTINO → NORTEAMERICANO", Toast.LENGTH_SHORT).show();
+        });
+        usa.setOnClickListener(v -> {
+            setDirection(true);
+            Toast.makeText(this, "Dirección: NORTEAMERICANO → ARGENTINO", Toast.LENGTH_SHORT).show();
+        });
         right.setOnClickListener(v -> setDirection(false));
         left.setOnClickListener(v -> setDirection(true));
-        argentina.setAlpha(northToArgentine ? 1f : 0.75f);
-        usa.setAlpha(northToArgentine ? 1f : 0.75f);
+        argentina.setAlpha(northToArgentine ? 0.72f : 1f);
+        usa.setAlpha(northToArgentine ? 1f : 0.72f);
+        right.setAlpha(northToArgentine ? 0.45f : 1f);
+        left.setAlpha(northToArgentine ? 1f : 0.45f);
     }
 
     private void startVoiceRecognition() {
@@ -424,7 +502,11 @@ public class OverlayService extends Service {
                     String line; while ((line = reader.readLine()) != null) response.append(line);
                 }
                 JSONObject json = new JSONObject(response.toString());
+                int status = json.optInt("responseStatus", 200);
+                if (status != 200) throw new IllegalStateException("Translation service status " + status);
                 String translated = json.getJSONObject("responseData").getString("translatedText");
+                translated = Html.fromHtml(translated, Html.FROM_HTML_MODE_LEGACY).toString().trim();
+                if (translated.isEmpty()) throw new IllegalStateException("Empty translation");
                 final String finalText = translated;
                 main.post(() -> result.setText(finalText));
             } catch (Exception e) {
