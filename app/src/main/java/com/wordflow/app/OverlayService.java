@@ -47,7 +47,7 @@ import java.util.concurrent.Executors;
 public class OverlayService extends Service {
     private WindowManager wm;
     private WindowManager.LayoutParams params;
-    private LinearLayout panel;
+    private LinearLayout panel, directionRow;
     private EditText input;
     private TextView result, direction, sourceFlag, targetFlag;
     private TextToSpeech tts;
@@ -191,7 +191,7 @@ public class OverlayService extends Service {
         closeLp.leftMargin = dp(4); header.addView(closeButton, closeLp);
         panel.addView(header);
 
-        LinearLayout directionRow = new LinearLayout(this);
+        directionRow = new LinearLayout(this);
         directionRow.setGravity(Gravity.CENTER);
         directionRow.setPadding(dp(6), dp(8), dp(6), dp(8));
         directionRow.setBackground(rounded(Color.rgb(15, 39, 88)));
@@ -300,7 +300,7 @@ public class OverlayService extends Service {
             result.setVisibility(minimized ? View.GONE : View.VISIBLE);
             output.setVisibility(minimized ? View.GONE : View.VISIBLE);
             hint.setVisibility(minimized ? View.GONE : View.VISIBLE);
-            direction.setVisibility(minimized ? View.GONE : View.VISIBLE);
+            directionRow.setVisibility(minimized ? View.GONE : View.VISIBLE);
             minimizeButton.setText(minimized ? "+" : "—");
             params.height = WindowManager.LayoutParams.WRAP_CONTENT;
             try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
