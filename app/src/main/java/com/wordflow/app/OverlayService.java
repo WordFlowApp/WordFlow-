@@ -49,7 +49,7 @@ public class OverlayService extends Service {
     private WindowManager.LayoutParams params;
     private LinearLayout panel;
     private EditText input;
-    private TextView result, direction;
+    private TextView result, direction, sourceFlag, targetFlag;
     private TextToSpeech tts;
     private SpeechRecognizer recognizer;
     private boolean ttsReady, northToArgentine = true, minimized;
@@ -97,6 +97,14 @@ public class OverlayService extends Service {
         GradientDrawable d = new GradientDrawable();
         d.setColor(color);
         d.setCornerRadius(dp(18));
+        return d;
+    }
+
+    private GradientDrawable circularIcon(int color) {
+        GradientDrawable d = new GradientDrawable();
+        d.setShape(GradientDrawable.OVAL);
+        d.setColor(color);
+        d.setStroke(dp(2), Color.rgb(65, 183, 255));
         return d;
     }
 
@@ -183,12 +191,29 @@ public class OverlayService extends Service {
         closeLp.leftMargin = dp(4); header.addView(closeButton, closeLp);
         panel.addView(header);
 
-        direction = makeText("🇺🇸  NORTEAMERICANO   ➜   🇦🇷  ARGENTINO", 12, Color.WHITE);
+        LinearLayout directionRow = new LinearLayout(this);
+        directionRow.setGravity(Gravity.CENTER);
+        directionRow.setPadding(dp(6), dp(8), dp(6), dp(8));
+        directionRow.setBackground(rounded(Color.rgb(15, 39, 88)));
+        sourceFlag = makeText("🇺🇸", 18, Color.WHITE);
+        sourceFlag.setGravity(Gravity.CENTER);
+        sourceFlag.setBackground(circularIcon(Color.rgb(18, 55, 120)));
+        direction = makeText("NORTEAMERICANO  ➜  ARGENTINO", 11, Color.WHITE);
         direction.setTypeface(null, Typeface.BOLD);
         direction.setGravity(Gravity.CENTER);
-        direction.setPadding(dp(6), dp(11), dp(6), dp(11));
-        direction.setBackground(rounded(Color.rgb(15, 39, 88)));
-        panel.addView(direction); direction.setOnClickListener(v -> switchDirection());
+        direction.setPadding(dp(8), dp(4), dp(8), dp(4));
+        targetFlag = makeText("🇦🇷", 18, Color.WHITE);
+        targetFlag.setGravity(Gravity.CENTER);
+        targetFlag.setBackground(circularIcon(Color.rgb(18, 55, 120)));
+        int flagSize = dp(42);
+        directionRow.addView(sourceFlag, new LinearLayout.LayoutParams(flagSize, flagSize));
+        directionRow.addView(direction, new LinearLayout.LayoutParams(0, -2, 1));
+        directionRow.addView(targetFlag, new LinearLayout.LayoutParams(flagSize, flagSize));
+        panel.addView(directionRow);
+        directionRow.setOnClickListener(v -> switchDirection());
+        sourceFlag.setOnClickListener(v -> switchDirection());
+        targetFlag.setOnClickListener(v -> switchDirection());
+        direction.setOnClickListener(v -> switchDirection());
 
         LinearLayout inputRow = new LinearLayout(this);
         inputRow.setGravity(Gravity.CENTER_VERTICAL); inputRow.setPadding(dp(8), 0, dp(6), 0);
@@ -303,7 +328,9 @@ public class OverlayService extends Service {
 
     private void switchDirection() {
         northToArgentine = !northToArgentine;
-        direction.setText(northToArgentine ? "🇺🇸 Norteamericano → 🇦🇷 Argentino" : "🇦🇷 Argentino → 🇺🇸 Norteamericano");
+        direction.setText(northToArgentine ? "NORTEAMERICANO  ➜  ARGENTINO" : "ARGENTINO  ➜  NORTEAMERICANO");
+        sourceFlag.setText(northToArgentine ? "🇺🇸" : "🇦🇷");
+        targetFlag.setText(northToArgentine ? "🇦🇷" : "🇺🇸");
         setSpeechLanguage();
     }
 
