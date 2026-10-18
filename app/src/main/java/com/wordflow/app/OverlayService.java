@@ -133,8 +133,10 @@ public class OverlayService extends Service {
                     float d = distance(e);
                     if (initialDistance > 0 && d > 0) {
                         float scale = d / initialDistance;
+                        // Resize the width while allowing the panel height to
+                        // wrap its content; a fixed height clipped the buttons.
                         params.width = Math.max(dp(230), Math.min(screenWidth - dp(16), (int)(initialWidth * scale)));
-                        params.height = Math.max(dp(170), Math.min(screenHeight - dp(80), (int)(initialHeight * scale)));
+                        params.height = WindowManager.LayoutParams.WRAP_CONTENT;
                         try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
                     }
                     return true;
@@ -222,7 +224,7 @@ public class OverlayService extends Service {
         actions.addView(swap, swapLp);
         LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(46), 1); translateLp.leftMargin = dp(8); translateLp.topMargin = dp(8);
         actions.addView(translate, translateLp); panel.addView(actions);
-        result = makeText("¡La traducción aparece acá!\\nLa traducción aparecerá aquí.", 16, Color.WHITE);
+        result = makeText("La traducción aparecerá aquí.", 16, Color.WHITE);
         result.setPadding(dp(14), dp(16), dp(14), dp(14));
         GradientDrawable resultBg = rounded(Color.rgb(12, 35, 79));
         resultBg.setStroke(dp(1), Color.rgb(47, 126, 226));
@@ -284,9 +286,17 @@ public class OverlayService extends Service {
         mic.setOnClickListener(v -> startVoiceRecognition());
         speak.setOnClickListener(v -> speakTranslation());
         copy.setOnClickListener(v -> {
+            String value = result.getText().toString().trim();
+            if (value.isEmpty() || value.equals("La traducción aparecerá aquí.")
+                    || value.equals("Traduciendo…")
+                    || value.equals("Escribí o dictá algo primero.")
+                    || value.startsWith("No se pudo traducir.")) {
+                Toast.makeText(this, "Primero obtené una traducción.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             ClipboardManager cb = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
-            cb.setPrimaryClip(ClipData.newPlainText("WordFlow", result.getText().toString()));
-            Toast.makeText(this, "Texto copiado", Toast.LENGTH_SHORT).show();
+            cb.setPrimaryClip(ClipData.newPlainText("WordFlow", value));
+            Toast.makeText(this, "Traducción copiada", Toast.LENGTH_SHORT).show();
         });
         try { wm.addView(panel, params); } catch (Exception e) { stopSelf(); }
     }
@@ -354,6 +364,7 @@ public class OverlayService extends Service {
                 }
                 JSONObject json = new JSONObject(response.toString());
                 String translated = json.getJSONObject("responseData").getString("translatedText");
+                translated = android.text.Html.fromHtml(translated, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim();
                 final String finalText = toArgentine ? localizeArgentineSpanish(source, translated) : translated;
                 main.post(() -> result.setText(finalText));
             } catch (Exception e) {
@@ -419,7 +430,9 @@ public class OverlayService extends Service {
 
     private void speakTranslation() {
         String value = result.getText().toString().trim();
-        if (value.isEmpty() || value.equals("La traducción aparecerá aquí.") || value.equals("Traduciendo…")) {
+        if (value.isEmpty() || value.equals("La traducción aparecerá aquí.")
+                || value.equals("Traduciendo…") || value.equals("Escribí o dictá algo primero.")
+                || value.startsWith("No se pudo traducir.")) {
             Toast.makeText(this, "Primero traducí un texto.", Toast.LENGTH_SHORT).show(); return;
         }
         if (ttsReady && tts != null) {
