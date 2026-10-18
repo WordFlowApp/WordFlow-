@@ -440,6 +440,17 @@ public class OverlayService extends Service {
         } else Toast.makeText(this, "El audio todavía no está listo.", Toast.LENGTH_SHORT).show();
     }
 
+    @Override public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        screenWidth = getResources().getDisplayMetrics().widthPixels;
+        screenHeight = getResources().getDisplayMetrics().heightPixels;
+        if (panel != null && params != null && wm != null) {
+            params.x = Math.max(0, Math.min(params.x, screenWidth - panel.getWidth()));
+            params.y = Math.max(0, Math.min(params.y, screenHeight - dp(80)));
+            try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
+        }
+    }
+
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
         return START_NOT_STICKY;
     }
