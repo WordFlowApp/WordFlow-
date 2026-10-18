@@ -312,15 +312,25 @@ public class OverlayService extends Service {
         mic.setOnClickListener(v -> startVoiceRecognition());
         speak.setOnClickListener(v -> speakTranslation());
         copy.setOnClickListener(v -> {
+            String translated = result.getText().toString().trim();
+            if (translated.isEmpty() || translated.contains("traducción aparecerá") ||
+                    translated.equals("Traduciendo…") || translated.equals("Traduciendo...")) {
+                Toast.makeText(this, "Primero traducí un texto.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             ClipboardManager cb = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
-            cb.setPrimaryClip(ClipData.newPlainText("WordFlow", result.getText().toString()));
+            cb.setPrimaryClip(ClipData.newPlainText("WordFlow", translated));
             Toast.makeText(this, "Texto copiado", Toast.LENGTH_SHORT).show();
         });
         try { wm.addView(panel, params); } catch (Exception e) { stopSelf(); }
     }
 
     private void switchDirection() {
-        northToArgentine = !northToArgentine;
+        setDirection(!northToArgentine);
+    }
+
+    private void setDirection(boolean toArgentine) {
+        northToArgentine = toArgentine;
         updateDirection();
         setSpeechLanguage();
     }
@@ -357,10 +367,10 @@ public class OverlayService extends Service {
         direction.addView(argentina, flagLp);
         direction.addView(arrows, arrowsLp);
         direction.addView(usa, new LinearLayout.LayoutParams(dp(48), dp(48)));
-        argentina.setOnClickListener(v -> { if (!northToArgentine) switchDirection(); });
-        usa.setOnClickListener(v -> { if (northToArgentine) switchDirection(); });
-        right.setOnClickListener(v -> { if (!northToArgentine) switchDirection(); });
-        left.setOnClickListener(v -> { if (northToArgentine) switchDirection(); });
+        argentina.setOnClickListener(v -> setDirection(false));
+        usa.setOnClickListener(v -> setDirection(true));
+        right.setOnClickListener(v -> setDirection(false));
+        left.setOnClickListener(v -> setDirection(true));
         argentina.setAlpha(northToArgentine ? 1f : 0.75f);
         usa.setAlpha(northToArgentine ? 1f : 0.75f);
     }
