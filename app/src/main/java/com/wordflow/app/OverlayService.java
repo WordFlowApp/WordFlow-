@@ -149,7 +149,7 @@ public class OverlayService extends Service {
         panel = new LinearLayout(this) {
             float initialDistance;
             float gestureStartScale = 1f;
-            int baseWidth;
+            int initialWidth;
             boolean resizing;
             float distance(MotionEvent e) {
                 if (e.getPointerCount() < 2) return 0;
@@ -161,7 +161,7 @@ public class OverlayService extends Service {
                 if (a == MotionEvent.ACTION_POINTER_DOWN && e.getPointerCount() >= 2) {
                     initialDistance = distance(e);
                     gestureStartScale = currentUiScale;
-                    baseWidth = dp(320);
+                    initialWidth = params.width > 0 ? params.width : getWidth();
                     resizing = initialDistance > 0;
                     return resizing;
                 }
@@ -174,7 +174,7 @@ public class OverlayService extends Service {
                             currentUiScale = requested;
                             applyUiScale(currentUiScale);
                             params.width = Math.max(dp(250), Math.min(screenWidth - dp(16),
-                                    Math.round(baseWidth * currentUiScale)));
+                                    Math.round(initialWidth * d / initialDistance)));
                             params.height = WindowManager.LayoutParams.WRAP_CONTENT;
                             try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
                         }
