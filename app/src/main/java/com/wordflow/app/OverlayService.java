@@ -81,6 +81,7 @@ public class OverlayService extends Service {
     private EditText input;
     private TextView result;
     private LinearLayout direction;
+    private Button sourceFlagButton, targetFlagButton, swapDirectionButton;
     private TextToSpeech tts;
     private SpeechRecognizer recognizer;
     private boolean ttsReady, northToArgentine = true, minimized;
@@ -231,20 +232,22 @@ public class OverlayService extends Service {
         panel.addView(header);
 
         LinearLayout inputRow = new LinearLayout(this);
-        inputRow.setGravity(Gravity.CENTER_VERTICAL); inputRow.setPadding(dp(8), 0, dp(6), 0);
+        inputRow.setGravity(Gravity.CENTER_VERTICAL); inputRow.setPadding(dp(6), 0, dp(6), 0);
         GradientDrawable inputBg = rounded(Color.rgb(10, 30, 68));
         inputBg.setStroke(dp(1), Color.rgb(75, 167, 255));
         inputRow.setBackground(inputBg);
-        input = new EditText(this); input.setHint("Escribí una palabra o frase");
+        sourceFlagButton = circularLanguageButton("🇺🇸", Color.rgb(8, 75, 151), 24);
+        sourceFlagButton.setContentDescription("Idioma de origen");
+        inputRow.addView(sourceFlagButton, new LinearLayout.LayoutParams(dp(58), dp(58)));
+        input = new EditText(this); input.setHint("Escribí una palabra o frase...");
         input.setTextColor(Color.WHITE); input.setHintTextColor(Color.LTGRAY);
         input.setTextSize(15); input.setMinLines(1); input.setMaxLines(3);
         input.setPadding(dp(8), dp(6), dp(4), dp(6));
         input.setBackgroundColor(Color.TRANSPARENT);
         inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(58), 1));
-        Button mic = makeButton("🎙");
-        mic.setTextColor(Color.WHITE); mic.setTextSize(17);
-        mic.setBackground(rounded(Color.rgb(41, 112, 218)));
-        inputRow.addView(mic, new LinearLayout.LayoutParams(dp(44), dp(44)));
+        Button mic = circularLanguageButton("🎙", Color.rgb(0, 153, 255), 20);
+        mic.setTextColor(Color.WHITE);
+        inputRow.addView(mic, new LinearLayout.LayoutParams(dp(48), dp(48)));
         panel.addView(inputRow);
 
         LinearLayout actions = new LinearLayout(this);
@@ -252,36 +255,45 @@ public class OverlayService extends Service {
         direction = new LinearLayout(this);
         direction.setGravity(Gravity.CENTER);
         direction.setOrientation(LinearLayout.HORIZONTAL);
-        direction.setPadding(dp(4), dp(4), dp(4), dp(4));
-        GradientDrawable languageBg = rounded(Color.rgb(7, 28, 68));
-        languageBg.setStroke(dp(2), Color.rgb(0, 220, 255));
-        direction.setBackground(languageBg);
-        Button translate = makeButton("✦  TRADUCIR");
+        direction.setPadding(dp(2), dp(2), dp(2), dp(2));
+        swapDirectionButton = circularLanguageButton("⇄", Color.rgb(0, 190, 235), 30);
+        swapDirectionButton.setTextColor(Color.rgb(7, 35, 80));
+        swapDirectionButton.setContentDescription("Invertir dirección de traducción");
+        direction.addView(swapDirectionButton, new LinearLayout.LayoutParams(dp(58), dp(58)));
+        Button translate = makeButton("⇄  Traducir");
         translate.setTextColor(Color.rgb(4, 24, 65));
         translate.setTypeface(null, Typeface.BOLD);
-        translate.setTextSize(17);
+        translate.setTextSize(20);
         GradientDrawable translateBg = new GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
                 new int[]{Color.rgb(0, 229, 238), Color.rgb(0, 151, 255)});
         translateBg.setCornerRadius(dp(34));
         translate.setBackground(translateBg);
         translate.setSoundEffectsEnabled(false);
-        LinearLayout.LayoutParams languageLp = new LinearLayout.LayoutParams(0, dp(68), 1.05f);
+        LinearLayout.LayoutParams languageLp = new LinearLayout.LayoutParams(dp(66), dp(68));
         languageLp.topMargin = dp(8);
         actions.addView(direction, languageLp);
-        LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(68), 1.2f);
+        LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(68), 1);
         translateLp.leftMargin = dp(8); translateLp.topMargin = dp(8);
         actions.addView(translate, translateLp);
         panel.addView(actions);
         updateDirection();
-        result = makeText("¡La traducción aparece acá!\n\nLa traducción aparecerá aquí.", 16, Color.WHITE);
-        result.setPadding(dp(14), dp(16), dp(14), dp(14));
+
+        LinearLayout output = new LinearLayout(this);
+        output.setGravity(Gravity.CENTER_VERTICAL);
+        output.setPadding(dp(2), 0, dp(2), 0);
+        output.setOrientation(LinearLayout.HORIZONTAL);
+        targetFlagButton = circularLanguageButton("🇦🇷", Color.rgb(8, 75, 151), 24);
+        targetFlagButton.setContentDescription("Idioma de destino");
+        output.addView(targetFlagButton, new LinearLayout.LayoutParams(dp(58), dp(58)));
+        result = makeText("La traducción aparecerá aquí.", 16, Color.WHITE);
+        result.setPadding(dp(12), dp(12), dp(12), dp(12));
         GradientDrawable resultBg = rounded(Color.rgb(12, 35, 79));
         resultBg.setStroke(dp(1), Color.rgb(47, 126, 226));
         result.setBackground(resultBg);
-        LinearLayout.LayoutParams resultLp = new LinearLayout.LayoutParams(-1, -2); resultLp.topMargin = dp(10);
-        panel.addView(result, resultLp);
-        LinearLayout output = new LinearLayout(this); output.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams resultLp = new LinearLayout.LayoutParams(0, dp(58), 1);
+        resultLp.leftMargin = dp(6); resultLp.rightMargin = dp(6);
+        output.addView(result, resultLp);
         Button speak = makeButton("◖))"), copy = makeButton("⧉");
         speak.setContentDescription("Escuchar traducción");
         copy.setContentDescription("Copiar traducción");
@@ -291,9 +303,9 @@ public class OverlayService extends Service {
         copy.setTextColor(Color.WHITE); copy.setBackground(rounded(Color.rgb(8, 45, 105)));
         speak.setSoundEffectsEnabled(false);
         copy.setSoundEffectsEnabled(false);
-        LinearLayout.LayoutParams speakLp = new LinearLayout.LayoutParams(0, dp(44), 1); speakLp.topMargin = dp(8);
+        LinearLayout.LayoutParams speakLp = new LinearLayout.LayoutParams(dp(48), dp(48)); speakLp.topMargin = dp(8);
         output.addView(speak, speakLp);
-        LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(0, dp(44), 1); copyLp.leftMargin = dp(8); copyLp.topMargin = dp(8);
+        LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(dp(48), dp(48)); copyLp.leftMargin = dp(6); copyLp.topMargin = dp(8);
         output.addView(copy, copyLp); panel.addView(output);
         TextView hint = makeText("⠿  ARRASTRÁ PARA MOVER   ·   🤏  PELLIZCÁ PARA AJUSTAR", 9, Color.rgb(184, 216, 255));
         hint.setPadding(0, dp(8), 0, 0); panel.addView(hint);
@@ -410,45 +422,27 @@ public class OverlayService extends Service {
     }
 
     private void updateDirection() {
-        if (direction == null) return;
-        direction.removeAllViews();
-
-        // Keep the visual source -> target order synchronized with the actual
-        // translation pair used by translateText(): en|es or es|en.
-        final boolean toArgentine = northToArgentine;
-        Button sourceFlag = circularLanguageButton(toArgentine ? "🇺🇸" : "🇦🇷",
-                Color.rgb(8, 75, 151), 24);
-        Button targetFlag = circularLanguageButton(toArgentine ? "🇦🇷" : "🇺🇸",
-                Color.rgb(8, 75, 151), 24);
-        sourceFlag.setContentDescription(toArgentine
-                ? "Idioma de origen: norteamericano. Tocar para cambiar a argentino."
-                : "Idioma de origen: argentino. Tocar para cambiar a norteamericano.");
-        targetFlag.setContentDescription(toArgentine
-                ? "Idioma de destino: argentino. Tocar para cambiar a norteamericano."
-                : "Idioma de destino: norteamericano. Tocar para cambiar a argentino.");
-
-        Button swap = circularLanguageButton("⇄", Color.rgb(0, 190, 235), 27);
-        swap.setTextColor(Color.rgb(7, 35, 80));
-        swap.setContentDescription("Invertir dirección de traducción");
-        LinearLayout.LayoutParams flagLp = new LinearLayout.LayoutParams(dp(48), dp(48));
-        LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(48), dp(48));
-        swapLp.leftMargin = dp(8);
-        swapLp.rightMargin = dp(8);
-
-        direction.addView(sourceFlag, flagLp);
-        direction.addView(swap, swapLp);
-        direction.addView(targetFlag, new LinearLayout.LayoutParams(dp(48), dp(48)));
-
-        View.OnClickListener invert = v -> {
-            setDirection(!northToArgentine);
-            Toast.makeText(this, northToArgentine
-                    ? "Dirección: NORTEAMERICANO → ARGENTINO"
-                    : "Dirección: ARGENTINO → NORTEAMERICANO",
-                    Toast.LENGTH_SHORT).show();
-        };
-        sourceFlag.setOnClickListener(invert);
-        targetFlag.setOnClickListener(invert);
-        swap.setOnClickListener(invert);
+        if (sourceFlagButton != null) {
+            sourceFlagButton.setText(northToArgentine ? "🇺🇸" : "🇦🇷");
+            sourceFlagButton.setContentDescription(northToArgentine
+                    ? "Idioma de origen: norteamericano" : "Idioma de origen: argentino");
+        }
+        if (targetFlagButton != null) {
+            targetFlagButton.setText(northToArgentine ? "🇦🇷" : "🇺🇸");
+            targetFlagButton.setContentDescription(northToArgentine
+                    ? "Idioma de destino: argentino" : "Idioma de destino: norteamericano");
+        }
+        if (swapDirectionButton != null) {
+            swapDirectionButton.setOnClickListener(v -> {
+                setDirection(!northToArgentine);
+                Toast.makeText(this, northToArgentine
+                        ? "Norteamericano → Argentino" : "Argentino → Norteamericano",
+                        Toast.LENGTH_SHORT).show();
+            });
+        }
+        View.OnClickListener invert = v -> setDirection(!northToArgentine);
+        if (sourceFlagButton != null) sourceFlagButton.setOnClickListener(invert);
+        if (targetFlagButton != null) targetFlagButton.setOnClickListener(invert);
     }
 
     private void startVoiceRecognition() {
