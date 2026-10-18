@@ -236,16 +236,16 @@ public class OverlayService extends Service {
         panel.addView(inputRow);
 
         LinearLayout actions = new LinearLayout(this);
-        Button swap = makeButton("🇺🇸  ⇄  🇦🇷"), translate = makeButton("✦  TRADUCIR");
+        Button swap = makeButton("⇄"), translate = makeButton("✦  TRADUCIR");
         swap.setTextColor(Color.WHITE);
-        GradientDrawable swapBg = rounded(Color.rgb(27, 63, 124));
-        swapBg.setStroke(dp(1), Color.rgb(45, 109, 190));
+        GradientDrawable swapBg = circularIcon(Color.rgb(27, 63, 124));
+        swap.setTextSize(23);
         swap.setBackground(swapBg);
         translate.setTextColor(Color.WHITE); translate.setTypeface(null, Typeface.BOLD);
         GradientDrawable translateBg = rounded(Color.rgb(0, 132, 255));
         translateBg.setStroke(dp(1), Color.rgb(65, 183, 255));
         translate.setBackground(translateBg);
-        LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(108), dp(46)); swapLp.topMargin = dp(8);
+        LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(48), dp(46)); swapLp.topMargin = dp(8);
         actions.addView(swap, swapLp);
         LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(46), 1); translateLp.leftMargin = dp(8); translateLp.topMargin = dp(8);
         actions.addView(translate, translateLp); panel.addView(actions);
