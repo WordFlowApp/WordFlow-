@@ -144,8 +144,8 @@ public class OverlayService extends Service {
                         // Resize the width while allowing the panel height to
                         // wrap its content; a fixed height clipped the buttons.
                         int screenWidthDp = (int)(screenWidth / getResources().getDisplayMetrics().density);
-                        int minWidth = dp(Math.max(190, screenWidthDp * 0.48f));
-                        int maxWidth = dp(Math.max(220, screenWidthDp * 0.72f));
+                        int minWidth = dp(Math.max(180, screenWidthDp * 0.42f));
+                        int maxWidth = dp(Math.max(210, screenWidthDp * 0.68f));
                         params.width = Math.max(minWidth, Math.min(maxWidth, (int)(initialWidth * scale)));
                         params.height = WindowManager.LayoutParams.WRAP_CONTENT;
                         try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
@@ -162,7 +162,7 @@ public class OverlayService extends Service {
             }
         };
         panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(dp(12), dp(10), dp(12), dp(12));
+        panel.setPadding(dp(8), dp(6), dp(8), dp(7));
         GradientDrawable panelBg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
                 new int[]{Color.rgb(9, 49, 125), Color.rgb(4, 19, 54)});
         panelBg.setCornerRadius(dp(22));
@@ -172,10 +172,10 @@ public class OverlayService extends Service {
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setPadding(dp(10), dp(5), dp(4), dp(5));
+        header.setPadding(dp(7), dp(2), dp(3), dp(2));
         GradientDrawable headerBg = rounded(Color.rgb(20, 93, 190));
         header.setBackground(headerBg);
-        TextView title = makeText("🌐  WordFlow", 23, Color.WHITE);
+        TextView title = makeText("🌐  WordFlow 2", 18, Color.WHITE);
         title.setTypeface(null, Typeface.BOLD);
         header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
         Button minimizeButton = makeButton("−"), closeButton = makeButton("×");
@@ -188,7 +188,7 @@ public class OverlayService extends Service {
         GradientDrawable closeGlow = rounded(Color.rgb(204, 55, 77));
         closeGlow.setStroke(dp(1), Color.rgb(255, 103, 124));
         closeButton.setBackground(closeGlow);
-        LinearLayout.LayoutParams minLp = new LinearLayout.LayoutParams(dp(40), dp(40));
+        LinearLayout.LayoutParams minLp = new LinearLayout.LayoutParams(dp(34), dp(34));
         minLp.leftMargin = dp(4); header.addView(minimizeButton, minLp);
         LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(dp(40), dp(40));
         closeLp.leftMargin = dp(4); header.addView(closeButton, closeLp);
@@ -196,7 +196,7 @@ public class OverlayService extends Service {
 
         directionRow = new LinearLayout(this);
         directionRow.setGravity(Gravity.CENTER);
-        directionRow.setPadding(dp(6), dp(8), dp(6), dp(8));
+        directionRow.setPadding(dp(4), dp(4), dp(4), dp(4));
         directionRow.setBackground(rounded(Color.rgb(15, 39, 88)));
         sourceFlag = makeText("🇺🇸", 18, Color.WHITE);
         sourceFlag.setGravity(Gravity.CENTER);
@@ -208,7 +208,7 @@ public class OverlayService extends Service {
         targetFlag = makeText("🇦🇷", 18, Color.WHITE);
         targetFlag.setGravity(Gravity.CENTER);
         targetFlag.setBackground(circularIcon(Color.rgb(18, 55, 120)));
-        int flagSize = dp(42);
+        int flagSize = dp(34);
         directionRow.addView(sourceFlag, new LinearLayout.LayoutParams(flagSize, flagSize));
         directionRow.addView(direction, new LinearLayout.LayoutParams(0, -2, 1));
         directionRow.addView(targetFlag, new LinearLayout.LayoutParams(flagSize, flagSize));
@@ -219,7 +219,7 @@ public class OverlayService extends Service {
         direction.setOnClickListener(v -> switchDirection());
 
         LinearLayout inputRow = new LinearLayout(this);
-        inputRow.setGravity(Gravity.CENTER_VERTICAL); inputRow.setPadding(dp(8), 0, dp(6), 0);
+        inputRow.setGravity(Gravity.CENTER_VERTICAL); inputRow.setPadding(dp(5), 0, dp(4), 0);
         GradientDrawable inputBg = rounded(Color.rgb(10, 30, 68));
         inputBg.setStroke(dp(1), Color.rgb(75, 167, 255));
         inputRow.setBackground(inputBg);
@@ -228,14 +228,14 @@ public class OverlayService extends Service {
         input.setTextSize(15); input.setMinLines(1); input.setMaxLines(3);
         input.setPadding(dp(8), dp(6), dp(4), dp(6));
         input.setBackgroundColor(Color.TRANSPARENT);
-        inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(58), 1));
+        inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(36), 1));
         Button mic = makeButton("🎙");
         mic.setTextColor(Color.WHITE); mic.setTextSize(17);
         GradientDrawable micGlow = rounded(Color.rgb(41, 112, 218));
         micGlow.setCornerRadius(dp(24));
         micGlow.setStroke(dp(1), Color.rgb(70, 172, 255));
         mic.setBackground(micGlow);
-        inputRow.addView(mic, new LinearLayout.LayoutParams(dp(44), dp(44)));
+        inputRow.addView(mic, new LinearLayout.LayoutParams(dp(36), dp(36)));
         panel.addView(inputRow);
 
         LinearLayout actions = new LinearLayout(this);
@@ -248,12 +248,12 @@ public class OverlayService extends Service {
         GradientDrawable translateBg = rounded(Color.rgb(0, 132, 255));
         translateBg.setStroke(dp(1), Color.rgb(65, 183, 255));
         translate.setBackground(translateBg);
-        LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(48), dp(46)); swapLp.topMargin = dp(8);
+        LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(40), dp(40)); swapLp.topMargin = dp(8);
         actions.addView(swap, swapLp);
-        LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(46), 1); translateLp.leftMargin = dp(8); translateLp.topMargin = dp(8);
+        LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(40), 1); translateLp.leftMargin = dp(8); translateLp.topMargin = dp(8);
         actions.addView(translate, translateLp); panel.addView(actions);
         result = makeText("La traducción aparecerá aquí.", 16, Color.WHITE);
-        result.setPadding(dp(14), dp(16), dp(14), dp(14));
+        result.setPadding(dp(9), dp(8), dp(9), dp(8));
         GradientDrawable resultBg = rounded(Color.rgb(12, 35, 79));
         resultBg.setStroke(dp(1), Color.rgb(47, 126, 226));
         result.setBackground(resultBg);
@@ -271,15 +271,15 @@ public class OverlayService extends Service {
         output.addView(speak, speakLp);
         LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(0, dp(44), 1); copyLp.leftMargin = dp(8); copyLp.topMargin = dp(8);
         output.addView(copy, copyLp); panel.addView(output);
-        TextView hint = makeText("⠿  ARRASTRÁ PARA MOVER   ·   🤏  PELLIZCÁ PARA AJUSTAR", 9, Color.rgb(184, 216, 255));
-        hint.setPadding(0, dp(8), 0, 0); panel.addView(hint);
+        TextView hint = makeText("⠿ MOVER  ·  🤏 PELLIZCAR", 8, Color.rgb(184, 216, 255));
+        hint.setPadding(0, dp(4), 0, 0); panel.addView(hint);
 
         int type = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
         // Start compact: target about one quarter of the phone's visible area.
         // Width is responsive to screen size and deliberately capped so the overlay
         // does not cover the video like the previous near-half-screen layout.
         int screenWidthDp = (int)(screenWidth / getResources().getDisplayMetrics().density);
-        int initialWidthDp = Math.max(210, Math.min(260, (int)(screenWidthDp * 0.62f)));
+        int initialWidthDp = Math.max(190, Math.min(230, (int)(screenWidthDp * 0.52f)));
         params = new WindowManager.LayoutParams(dp(initialWidthDp), WindowManager.LayoutParams.WRAP_CONTENT, type,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
