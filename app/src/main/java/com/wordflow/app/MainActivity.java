@@ -121,8 +121,10 @@ public class MainActivity extends Activity {
                 launchOverlayService();
             } else {
                 Toast.makeText(this,
-                        "Podés usar la traducción escribiendo; el dictado requiere permiso de micrófono.",
+                        "El dictado quedó desactivado. Podés usar WordFlow escribiendo el texto.",
                         Toast.LENGTH_LONG).show();
+                // Microphone permission is optional; do not block the translator.
+                launchOverlayService();
             }
         }
     }
