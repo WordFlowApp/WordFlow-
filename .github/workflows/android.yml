@@ -37,10 +37,45 @@ jobs:
           gradle-version: '8.9'
           arguments: assembleDebug --stacktrace
 
-      - name: Verificar APK y codigo
+      # A persistent signing key makes future APKs update-compatible with
+      # each other. Never commit the keystore or its passwords to the repo.
+      - name: Firmar con clave persistente (si está configurada)
+        shell: bash
+        env:
+          WORD_FLOW_KEYSTORE_BASE64: ${{ secrets.WORD_FLOW_KEYSTORE_BASE64 }}
+          WORD_FLOW_KEYSTORE_PASSWORD: ${{ secrets.WORD_FLOW_KEYSTORE_PASSWORD }}
+          WORD_FLOW_KEY_ALIAS: ${{ secrets.WORD_FLOW_KEY_ALIAS }}
+          WORD_FLOW_KEY_PASSWORD: ${{ secrets.WORD_FLOW_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/debug/app-debug.apk'
+          if [ -n "${WORD_FLOW_KEYSTORE_BASE64:-}" ] && [ -n "${WORD_FLOW_KEYSTORE_PASSWORD:-}" ] && [ -n "${WORD_FLOW_KEY_ALIAS:-}" ] && [ -n "${WORD_FLOW_KEY_PASSWORD:-}" ]; then
+            KEYSTORE="$RUNNER_TEMP/wordflow-signing.jks"
+            SIGNED="$RUNNER_TEMP/app-debug-signed.apk"
+            printf '%s' "$WORD_FLOW_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE"
+            APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+            if [ -z "$APKSIGNER" ]; then
+              echo 'ERROR: No se encontró apksigner.'
+              exit 1
+            fi
+            "$APKSIGNER" sign \
+              --ks "$KEYSTORE" \
+              --ks-key-alias "$WORD_FLOW_KEY_ALIAS" \
+              --ks-pass env:WORD_FLOW_KEYSTORE_PASSWORD \
+              --key-pass env:WORD_FLOW_KEY_PASSWORD \
+              --out "$SIGNED" "$APK"
+            mv "$SIGNED" "$APK"
+            rm -f "$KEYSTORE"
+            echo 'APK firmado con la clave persistente configurada.'
+          else
+            echo 'AVISO: No hay clave persistente configurada; este APK usa la firma debug temporal de CI.'
+            echo 'No se garantiza que pueda actualizar una instalación firmada con otra clave.'
+          fi
+
+      - name: Verificar APK y firma
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           APK='app/build/outputs/apk/debug/app-debug.apk'
           if [ ! -f "$APK" ]; then
             echo 'ERROR: No se encontro el APK.'
@@ -52,8 +87,9 @@ jobs:
           echo '=== VERIFICAR ARCHIVO ==='
           unzip -t "$APK"
           echo '=== VERIFICAR CODIGO DEX ==='
-          unzip -l "$APK" | grep -E 'classes[0-9]*\.dex'
           unzip -Z1 "$APK" | grep -Eq '^classes([0-9]+)?\.dex$'
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
           echo 'Verificacion del APK completada.'
 
       - name: Guardar APK
