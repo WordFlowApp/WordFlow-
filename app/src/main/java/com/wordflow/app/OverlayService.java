@@ -167,9 +167,14 @@ public class OverlayService extends Service {
         header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
         Button minimizeButton = makeButton("−"), closeButton = makeButton("×");
         minimizeButton.setTextColor(Color.WHITE); minimizeButton.setTextSize(20);
-        minimizeButton.setBackground(rounded(Color.rgb(35, 118, 218)));\n        GradientDrawable minGlow = rounded(Color.rgb(35, 118, 218));\n        minGlow.setStroke(dp(1), Color.rgb(72, 173, 255));\n        minimizeButton.setBackground(minGlow);
+        minimizeButton.setBackground(rounded(Color.rgb(35, 118, 218)));
+        GradientDrawable minGlow = rounded(Color.rgb(35, 118, 218));
+        minGlow.setStroke(dp(1), Color.rgb(72, 173, 255));
+        minimizeButton.setBackground(minGlow);
         closeButton.setTextColor(Color.WHITE); closeButton.setTextSize(22);
-        GradientDrawable closeGlow = rounded(Color.rgb(204, 55, 77));\n        closeGlow.setStroke(dp(1), Color.rgb(255, 103, 124));\n        closeButton.setBackground(closeGlow);
+        GradientDrawable closeGlow = rounded(Color.rgb(204, 55, 77));
+        closeGlow.setStroke(dp(1), Color.rgb(255, 103, 124));
+        closeButton.setBackground(closeGlow);
         LinearLayout.LayoutParams minLp = new LinearLayout.LayoutParams(dp(40), dp(40));
         minLp.leftMargin = dp(4); header.addView(minimizeButton, minLp);
         LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(dp(40), dp(40));
@@ -205,14 +210,21 @@ public class OverlayService extends Service {
 
         LinearLayout actions = new LinearLayout(this);
         Button swap = makeButton("🇺🇸  ⇄  🇦🇷"), translate = makeButton("✦  TRADUCIR");
-        swap.setTextColor(Color.WHITE);\n        GradientDrawable swapBg = rounded(Color.rgb(27, 63, 124));\n        swapBg.setStroke(dp(1), Color.rgb(45, 109, 190));\n        swap.setBackground(swapBg);
+        swap.setTextColor(Color.WHITE);
+        GradientDrawable swapBg = rounded(Color.rgb(27, 63, 124));
+        swapBg.setStroke(dp(1), Color.rgb(45, 109, 190));
+        swap.setBackground(swapBg);
         translate.setTextColor(Color.WHITE); translate.setTypeface(null, Typeface.BOLD);
-        GradientDrawable translateBg = rounded(Color.rgb(0, 132, 255));\n        translateBg.setStroke(dp(1), Color.rgb(65, 183, 255));\n        translate.setBackground(translateBg);
+        GradientDrawable translateBg = rounded(Color.rgb(0, 132, 255));
+        translateBg.setStroke(dp(1), Color.rgb(65, 183, 255));
+        translate.setBackground(translateBg);
         LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(108), dp(46)); swapLp.topMargin = dp(8);
         actions.addView(swap, swapLp);
         LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(46), 1); translateLp.leftMargin = dp(8); translateLp.topMargin = dp(8);
         actions.addView(translate, translateLp); panel.addView(actions);
-        result = makeText("¡La traducción aparece acá!\n\nLa traducción aparecerá aquí.", 16, Color.WHITE);
+        result = makeText("¡La traducción aparece acá!
+
+La traducción aparecerá aquí.", 16, Color.WHITE);
         result.setPadding(dp(14), dp(16), dp(14), dp(14));
         GradientDrawable resultBg = rounded(Color.rgb(12, 35, 79));
         resultBg.setStroke(dp(1), Color.rgb(47, 126, 226));
