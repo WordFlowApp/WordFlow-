@@ -196,7 +196,10 @@ public class OverlayService extends Service {
         inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(58), 1));
         Button mic = makeButton("🎙");
         mic.setTextColor(Color.WHITE); mic.setTextSize(17);
-        mic.setBackground(rounded(Color.rgb(41, 112, 218)));
+        GradientDrawable micGlow = rounded(Color.rgb(41, 112, 218));
+        micGlow.setCornerRadius(dp(24));
+        micGlow.setStroke(dp(1), Color.rgb(70, 172, 255));
+        mic.setBackground(micGlow);
         inputRow.addView(mic, new LinearLayout.LayoutParams(dp(44), dp(44)));
         panel.addView(inputRow);
 
@@ -218,8 +221,12 @@ public class OverlayService extends Service {
         panel.addView(result, resultLp);
         LinearLayout output = new LinearLayout(this); output.setGravity(Gravity.CENTER_VERTICAL);
         Button speak = makeButton("🔊 Escuchar"), copy = makeButton("Copiar");
-        speak.setTextColor(Color.WHITE); speak.setBackground(rounded(Color.rgb(27, 63, 124)));
-        copy.setTextColor(Color.WHITE); copy.setBackground(rounded(Color.rgb(27, 63, 124)));
+        speak.setTextColor(Color.WHITE);
+        GradientDrawable speakBg = rounded(Color.rgb(27, 63, 124));
+        speakBg.setStroke(dp(1), Color.rgb(45, 109, 190)); speak.setBackground(speakBg);
+        copy.setTextColor(Color.WHITE);
+        GradientDrawable copyBg = rounded(Color.rgb(27, 63, 124));
+        copyBg.setStroke(dp(1), Color.rgb(45, 109, 190)); copy.setBackground(copyBg);
         LinearLayout.LayoutParams speakLp = new LinearLayout.LayoutParams(0, dp(44), 1); speakLp.topMargin = dp(8);
         output.addView(speak, speakLp);
         LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(0, dp(44), 1); copyLp.leftMargin = dp(8); copyLp.topMargin = dp(8);
@@ -427,5 +434,4 @@ public class OverlayService extends Service {
     @Override public IBinder onBind(Intent intent) {
         return null;
     }
-            }
-                           
+}
