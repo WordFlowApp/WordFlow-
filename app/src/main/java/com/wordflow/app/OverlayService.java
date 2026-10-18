@@ -416,6 +416,12 @@ public class OverlayService extends Service {
         String normalized = source.trim().toLowerCase(Locale.US)
                 .replaceAll("[.!?]+$", "").trim();
         switch (normalized) {
+            case "hello":
+            case "hi":
+            case "hey":
+                return "Hola.";
+            case "good morning":
+                return "Buen día.";
             case "how are you":
             case "how are you doing":
                 return "¿Cómo andás?";
