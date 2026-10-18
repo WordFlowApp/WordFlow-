@@ -222,9 +222,7 @@ public class OverlayService extends Service {
         actions.addView(swap, swapLp);
         LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(46), 1); translateLp.leftMargin = dp(8); translateLp.topMargin = dp(8);
         actions.addView(translate, translateLp); panel.addView(actions);
-        result = makeText("¡La traducción aparece acá!
-
-La traducción aparecerá aquí.", 16, Color.WHITE);
+        result = makeText("¡La traducción aparece acá!\\nLa traducción aparecerá aquí.", 16, Color.WHITE);
         result.setPadding(dp(14), dp(16), dp(14), dp(14));
         GradientDrawable resultBg = rounded(Color.rgb(12, 35, 79));
         resultBg.setStroke(dp(1), Color.rgb(47, 126, 226));
