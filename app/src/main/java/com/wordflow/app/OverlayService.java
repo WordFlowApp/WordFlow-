@@ -57,7 +57,6 @@ public class OverlayService extends Service {
     private SpeechRecognizer recognizer;
     private boolean ttsReady, northToArgentine = true, minimized;
     private int screenWidth, screenHeight;
-    private float appliedUiScale = 1f;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final Handler main = new Handler(Looper.getMainLooper());
 
@@ -119,7 +118,6 @@ public class OverlayService extends Service {
     private void showPanel() {
         panel = new LinearLayout(this) {
             float initialDistance;
-            float initialUiScale;
             int initialWidth;
             boolean resizing;
             float distance(MotionEvent e) {
@@ -132,24 +130,18 @@ public class OverlayService extends Service {
                 if (a == MotionEvent.ACTION_POINTER_DOWN && e.getPointerCount() >= 2) {
                     initialDistance = distance(e);
                     initialWidth = params.width;
-                    initialUiScale = appliedUiScale;
                     resizing = initialDistance > 0;
                     return resizing;
                 }
                 if (resizing && a == MotionEvent.ACTION_MOVE && e.getPointerCount() >= 2) {
                     float d = distance(e);
                     if (initialDistance > 0 && d > 0) {
-                        float requested = Math.max(0.72f, Math.min(1.38f,
-                                initialUiScale * d / initialDistance));
-                        float factor = requested / appliedUiScale;
-                        if (Math.abs(factor - 1f) > 0.008f) {
-                            scaleChildViews(panel, factor);
-                            appliedUiScale = requested;
-                            params.width = Math.max(dp(250), Math.min(screenWidth - dp(16),
-                                    Math.round(initialWidth * requested / initialUiScale)));
-                            params.height = WindowManager.LayoutParams.WRAP_CONTENT;
-                            try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
-                        }
+                        int minWidth = dp(250);
+                        int maxWidth = Math.max(minWidth, screenWidth - dp(16));
+                        int requestedWidth = Math.round(initialWidth * d / initialDistance);
+                        params.width = Math.max(minWidth, Math.min(maxWidth, requestedWidth));
+                        params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                        try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
                     }
                     return true;
                 }
@@ -373,45 +365,6 @@ public class OverlayService extends Service {
         left.setOnClickListener(v -> setDirection(true));
         argentina.setAlpha(northToArgentine ? 1f : 0.75f);
         usa.setAlpha(northToArgentine ? 1f : 0.75f);
-    }
-
-    private void scaleChildViews(View view, float factor) {
-        if (view == panel) {
-            view.setPadding(Math.max(dp(6), Math.round(view.getPaddingLeft() * factor)),
-                    Math.max(dp(5), Math.round(view.getPaddingTop() * factor)),
-                    Math.max(dp(6), Math.round(view.getPaddingRight() * factor)),
-                    Math.max(dp(6), Math.round(view.getPaddingBottom() * factor)));
-        } else {
-            view.setPadding(Math.max(0, Math.round(view.getPaddingLeft() * factor)),
-                    Math.max(0, Math.round(view.getPaddingTop() * factor)),
-                    Math.max(0, Math.round(view.getPaddingRight() * factor)),
-                    Math.max(0, Math.round(view.getPaddingBottom() * factor)));
-        }
-        if (view instanceof TextView) {
-            TextView tv = (TextView) view;
-            tv.setTextSize(Math.max(9f, Math.min(30f, tv.getTextSize() /
-                    getResources().getDisplayMetrics().scaledDensity * factor)));
-        }
-        if (view instanceof android.view.ViewGroup) {
-            android.view.ViewGroup group = (android.view.ViewGroup) view;
-            for (int i = 0; i < group.getChildCount(); i++) {
-                View child = group.getChildAt(i);
-                android.view.ViewGroup.LayoutParams raw = child.getLayoutParams();
-                if (raw != null) {
-                    if (raw.width > 0) raw.width = Math.max(dp(20), Math.round(raw.width * factor));
-                    if (raw.height > 0) raw.height = Math.max(dp(20), Math.round(raw.height * factor));
-                    if (raw instanceof LinearLayout.LayoutParams) {
-                        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) raw;
-                        lp.leftMargin = Math.max(0, Math.round(lp.leftMargin * factor));
-                        lp.rightMargin = Math.max(0, Math.round(lp.rightMargin * factor));
-                        lp.topMargin = Math.max(0, Math.round(lp.topMargin * factor));
-                        lp.bottomMargin = Math.max(0, Math.round(lp.bottomMargin * factor));
-                    }
-                    child.setLayoutParams(raw);
-                }
-                scaleChildViews(child, factor);
-            }
-        }
     }
 
     private void startVoiceRecognition() {
