@@ -245,8 +245,10 @@ public class OverlayService extends Service {
         swap.setTextSize(23);
         swap.setBackground(swapBg);
         translate.setTextColor(Color.WHITE); translate.setTypeface(null, Typeface.BOLD);
-        GradientDrawable translateBg = rounded(Color.rgb(0, 132, 255));
-        translateBg.setStroke(dp(1), Color.rgb(65, 183, 255));
+        GradientDrawable translateBg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.rgb(0, 205, 220), Color.rgb(0, 139, 214)});
+        translateBg.setCornerRadius(dp(18));
+        translateBg.setStroke(dp(1), Color.rgb(104, 246, 255));
         translate.setBackground(translateBg);
         LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(40), dp(40)); swapLp.topMargin = dp(8);
         actions.addView(swap, swapLp);
