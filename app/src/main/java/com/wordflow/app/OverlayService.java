@@ -123,38 +123,43 @@ public class OverlayService extends Service {
     private void showPanel() {
         panel = new LinearLayout(this) {
             float initialDistance;
-            int initialWidth, initialHeight;
+            int initialWidth;
             boolean resizing;
             float distance(MotionEvent e) {
-                if (e.getPointerCount() < 2) return 0;
-                float x = e.getX(0) - e.getX(1), y = e.getY(0) - e.getY(1);
-                return (float) Math.sqrt(x*x + y*y);
+                if (e.getPointerCount() < 2) return 0f;
+                float dx = e.getX(0) - e.getX(1);
+                float dy = e.getY(0) - e.getY(1);
+                return (float) Math.hypot(dx, dy);
             }
             @Override public boolean dispatchTouchEvent(MotionEvent e) {
-                int a = e.getActionMasked();
-                if (a == MotionEvent.ACTION_POINTER_DOWN && e.getPointerCount() >= 2) {
-                    initialDistance = distance(e); initialWidth = params.width;
-                    initialHeight = Math.max(getHeight(), dp(300)); resizing = true;
-                    return true;
+                int action = e.getActionMasked();
+                if (action == MotionEvent.ACTION_POINTER_DOWN && e.getPointerCount() >= 2) {
+                    initialDistance = distance(e);
+                    initialWidth = params.width > 0 ? params.width : getWidth();
+                    resizing = initialDistance > 0;
+                    return resizing;
                 }
-                if (resizing && a == MotionEvent.ACTION_MOVE && e.getPointerCount() >= 2) {
-                    float d = distance(e);
-                    if (initialDistance > 0 && d > 0) {
-                        float scale = d / initialDistance;
-                        // Resize the width while allowing the panel height to
-                        // wrap its content; a fixed height clipped the buttons.
-                        int screenWidthDp = (int)(screenWidth / getResources().getDisplayMetrics().density);
-                        int minWidth = dp(Math.max(180, screenWidthDp * 0.42f));
-                        int maxWidth = dp(Math.max(210, screenWidthDp * 0.68f));
-                        params.width = Math.max(minWidth, Math.min(maxWidth, (int)(initialWidth * scale)));
-                        params.height = WindowManager.LayoutParams.WRAP_CONTENT;
-                        try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
+                if (resizing && action == MotionEvent.ACTION_MOVE && e.getPointerCount() >= 2) {
+                    float currentDistance = distance(e);
+                    if (initialDistance > 0 && currentDistance > 0) {
+                        float scale = currentDistance / initialDistance;
+                        int screenWidthDp = (int) (screenWidth / getResources().getDisplayMetrics().density);
+                        int minWidth = dp(145);
+                        int maxWidth = dp(Math.max(220, screenWidthDp * 0.88f));
+                        int nextWidth = Math.max(minWidth, Math.min(maxWidth,
+                                Math.round(initialWidth * scale)));
+                        if (nextWidth != params.width) {
+                            params.width = nextWidth;
+                            params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                            try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
+                        }
                     }
                     return true;
                 }
-                if (resizing && (a == MotionEvent.ACTION_POINTER_UP || a == MotionEvent.ACTION_UP || a == MotionEvent.ACTION_CANCEL)) {
-                    resizing = false; params.height = WindowManager.LayoutParams.WRAP_CONTENT;
-                    try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
+                if (resizing && (action == MotionEvent.ACTION_POINTER_UP
+                        || action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)) {
+                    resizing = false;
+                    initialDistance = 0f;
                     return true;
                 }
                 if (resizing) return true;
@@ -281,11 +286,12 @@ public class OverlayService extends Service {
         // Width is responsive to screen size and deliberately capped so the overlay
         // does not cover the video like the previous near-half-screen layout.
         int screenWidthDp = (int)(screenWidth / getResources().getDisplayMetrics().density);
-        int initialWidthDp = Math.max(190, Math.min(230, (int)(screenWidthDp * 0.52f)));
+        int initialWidthDp = Math.max(165, Math.min(205, (int)(screenWidthDp * 0.44f)));
         params = new WindowManager.LayoutParams(dp(initialWidthDp), WindowManager.LayoutParams.WRAP_CONTENT, type,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
         params.gravity = Gravity.TOP | Gravity.START; params.x = dp(8); params.y = dp(96);
+        params.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
 
         header.setOnTouchListener(new View.OnTouchListener() {
             float downX, downY; int startX, startY;
@@ -355,7 +361,9 @@ public class OverlayService extends Service {
             if (recognizer != null) recognizer.destroy();
             recognizer = SpeechRecognizer.createSpeechRecognizer(this);
             recognizer.setRecognitionListener(new RecognitionListener() {
-                @Override public void onReadyForSpeech(android.os.Bundle b) { }
+                @Override public void onReadyForSpeech(android.os.Bundle b) {
+                    main.post(() -> Toast.makeText(OverlayService.this, "Te escucho…", Toast.LENGTH_SHORT).show());
+                }
                 @Override public void onBeginningOfSpeech() { }
                 @Override public void onRmsChanged(float rms) { }
                 @Override public void onBufferReceived(byte[] b) { }
@@ -363,7 +371,24 @@ public class OverlayService extends Service {
                 @Override public void onPartialResults(android.os.Bundle b) { }
                 @Override public void onEvent(int e, android.os.Bundle b) { }
                 @Override public void onError(int error) {
-                    main.post(() -> Toast.makeText(OverlayService.this, "No reconocí la voz. Intentá otra vez.", Toast.LENGTH_SHORT).show());
+                    String reason;
+                    switch (error) {
+                        case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
+                            reason = "Falta permiso de micrófono. Abrí WordFlow y autorizalo.";
+                            break;
+                        case SpeechRecognizer.ERROR_NETWORK:
+                        case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
+                            reason = "El reconocimiento de voz necesita conexión a internet.";
+                            break;
+                        case SpeechRecognizer.ERROR_NO_MATCH:
+                        case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
+                            reason = "No detecté palabras. Tocá el micrófono y hablá de nuevo.";
+                            break;
+                        default:
+                            reason = "Falló el reconocimiento de voz. Revisá el permiso del micrófono.";
+                    }
+                    final String message = reason;
+                    main.post(() -> Toast.makeText(OverlayService.this, message, Toast.LENGTH_LONG).show());
                 }
                 @Override public void onResults(android.os.Bundle b) {
                     ArrayList<String> matches = b.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
