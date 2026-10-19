@@ -389,7 +389,11 @@ public class OverlayService extends Service {
             HttpURLConnection connection = null;
             try {
                 String pair = toArgentine ? "en|es" : "es|en";
-                String encoded = URLEncoder.encode(source, "UTF-8");
+                // Normalize common Argentine slang before sending it to the generic translator.
+                String translationInput = toArgentine
+                        ? source
+                        : ArgentineSpanishAdapter.prepareArgentineInputForTranslation(source);
+                String encoded = URLEncoder.encode(translationInput, "UTF-8");
                 URL url = new URL("https://api.mymemory.translated.net/get?q=" + encoded + "&langpair=" + pair);
                 connection = (HttpURLConnection)url.openConnection();
                 connection.setConnectTimeout(12000); connection.setReadTimeout(12000);
@@ -400,7 +404,9 @@ public class OverlayService extends Service {
                 JSONObject json = new JSONObject(response.toString());
                 String translated = json.getJSONObject("responseData").getString("translatedText");
                 translated = android.text.Html.fromHtml(translated, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim();
-                final String finalText = toArgentine ? localizeArgentineSpanish(source, translated) : translated;
+                final String finalText = toArgentine
+                        ? localizeArgentineSpanish(source, translated)
+                        : localizeNorthAmericanEnglish(source, translated);
                 main.post(() -> result.setText(finalText));
             } catch (Exception e) {
                 main.post(() -> result.setText("No se pudo traducir. Revisá internet e intentá otra vez."));
@@ -460,6 +466,56 @@ public class OverlayService extends Service {
             case "okay":
             case "ok":
                 return "Dale";
+            default:
+                return translated;
+        }
+    }
+
+    // Context-aware common Argentine expressions to natural US English.
+    // The generic translator handles sentences outside this explicit phrase list.
+    private String localizeNorthAmericanEnglish(String source, String translated) {
+        if (source == null || translated == null) return translated;
+        String normalized = source.trim().toLowerCase(Locale.forLanguageTag("es-AR"))
+                .replaceAll("[.!?¡¿]+$", "").trim();
+        switch (normalized) {
+            case "no tengo un mango":
+            case "estoy sin un mango":
+            case "estoy seco":
+                return "I'm broke.";
+            case "está todo piola":
+            case "esta todo piola":
+            case "todo piola":
+                return "Everything's cool.";
+            case "qué bajón":
+            case "que bajon":
+                return "That sucks.";
+            case "me estás cargando":
+            case "me estas cargando":
+            case "me estás tomando el pelo":
+            case "me estas tomando el pelo":
+                return "Are you kidding me?";
+            case "dale, nos vemos":
+            case "dale nos vemos":
+                return "Alright, see you.";
+            case "se me fue la mano":
+                return "I went too far.";
+            case "me mandé una macana":
+            case "me mande una macana":
+                return "I messed up.";
+            case "qué onda":
+            case "que onda":
+                return "What's up?";
+            case "de una":
+                return "Absolutely.";
+            case "ni en pedo":
+                return "No way.";
+            case "estoy al horno":
+                return "I'm screwed.";
+            case "qué quilombo":
+            case "que quilombo":
+                return "What a mess.";
+            case "estoy laburando":
+                return "I'm working.";
             default:
                 return translated;
         }
