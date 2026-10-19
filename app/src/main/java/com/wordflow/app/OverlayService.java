@@ -127,9 +127,7 @@ public class OverlayService extends Service {
             boolean resizing;
             float distance(MotionEvent e) {
                 if (e.getPointerCount() < 2) return 0f;
-                float dx = e.getX(0) - e.getX(1);
-                float dy = e.getY(0) - e.getY(1);
-                return (float) Math.hypot(dx, dy);
+                return (float) Math.hypot(e.getX(0) - e.getX(1), e.getY(0) - e.getY(1));
             }
             @Override public boolean dispatchTouchEvent(MotionEvent e) {
                 int action = e.getActionMasked();
@@ -142,15 +140,14 @@ public class OverlayService extends Service {
                 if (resizing && action == MotionEvent.ACTION_MOVE && e.getPointerCount() >= 2) {
                     float currentDistance = distance(e);
                     if (initialDistance > 0 && currentDistance > 0) {
-                        float scale = currentDistance / initialDistance;
-                        int screenWidthDp = (int) (screenWidth / getResources().getDisplayMetrics().density);
-                        int minWidth = dp(145);
-                        int maxWidth = dp(Math.max(220, screenWidthDp * 0.88f));
+                        int minWidth = Math.min(dp(270), Math.max(dp(220), screenWidth - dp(24)));
+                        int maxWidth = Math.max(minWidth, screenWidth - dp(16));
                         int nextWidth = Math.max(minWidth, Math.min(maxWidth,
-                                Math.round(initialWidth * scale)));
+                                Math.round(initialWidth * currentDistance / initialDistance)));
                         if (nextWidth != params.width) {
                             params.width = nextWidth;
                             params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                            params.x = Math.max(0, Math.min(params.x, screenWidth - nextWidth));
                             try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
                         }
                     }
@@ -167,157 +164,181 @@ public class OverlayService extends Service {
             }
         };
         panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(dp(8), dp(6), dp(8), dp(7));
+        panel.setPadding(dp(8), dp(6), dp(8), dp(6));
         GradientDrawable panelBg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{Color.rgb(9, 49, 125), Color.rgb(4, 19, 54)});
+                new int[]{Color.rgb(7, 35, 91), Color.rgb(3, 15, 43)});
         panelBg.setCornerRadius(dp(22));
-        panelBg.setStroke(dp(2), Color.rgb(50, 157, 255));
+        panelBg.setStroke(dp(2), Color.rgb(0, 190, 255));
         panel.setBackground(panelBg);
         panel.setElevation(dp(14));
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setPadding(dp(7), dp(2), dp(3), dp(2));
-        GradientDrawable headerBg = rounded(Color.rgb(20, 93, 190));
-        header.setBackground(headerBg);
-        TextView title = makeText("🌐  WordFlow 2", 18, Color.WHITE);
+        header.setPadding(dp(7), dp(1), dp(2), dp(2));
+        TextView title = makeText("WordFlow2", 17, Color.WHITE);
         title.setTypeface(null, Typeface.BOLD);
-        header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
-        Button minimizeButton = makeButton("−"), closeButton = makeButton("×");
-        minimizeButton.setTextColor(Color.WHITE); minimizeButton.setTextSize(20);
-        minimizeButton.setBackground(rounded(Color.rgb(35, 118, 218)));
-        GradientDrawable minGlow = rounded(Color.rgb(35, 118, 218));
-        minGlow.setStroke(dp(1), Color.rgb(72, 173, 255));
-        minimizeButton.setBackground(minGlow);
-        closeButton.setTextColor(Color.WHITE); closeButton.setTextSize(22);
-        GradientDrawable closeGlow = rounded(Color.rgb(204, 55, 77));
-        closeGlow.setStroke(dp(1), Color.rgb(255, 103, 124));
-        closeButton.setBackground(closeGlow);
-        LinearLayout.LayoutParams minLp = new LinearLayout.LayoutParams(dp(34), dp(34));
-        minLp.leftMargin = dp(4); header.addView(minimizeButton, minLp);
-        LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(dp(40), dp(40));
-        closeLp.leftMargin = dp(4); header.addView(closeButton, closeLp);
+        header.addView(title, new LinearLayout.LayoutParams(0, dp(36), 1));
+        direction = makeText(northToArgentine ? "NORTEAMERICANO  ➜  ARGENTINO" : "ARGENTINO  ➜  NORTEAMERICANO",
+                9, Color.rgb(117, 231, 255));
+        direction.setGravity(Gravity.CENTER);
+        direction.setTypeface(null, Typeface.BOLD);
+        header.addView(direction, new LinearLayout.LayoutParams(0, dp(36), 1));
+        Button minimizeButton = makeButton("−");
+        Button closeButton = makeButton("×");
+        styleRoundButton(minimizeButton, Color.rgb(18, 83, 153), 19);
+        styleRoundButton(closeButton, Color.rgb(137, 35, 65), 22);
+        LinearLayout.LayoutParams controlLp = new LinearLayout.LayoutParams(dp(34), dp(34));
+        controlLp.leftMargin = dp(4);
+        header.addView(minimizeButton, controlLp);
+        LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(dp(34), dp(34));
+        closeLp.leftMargin = dp(4);
+        header.addView(closeButton, closeLp);
         panel.addView(header);
 
-        directionRow = new LinearLayout(this);
-        directionRow.setGravity(Gravity.CENTER);
-        directionRow.setPadding(dp(4), dp(4), dp(4), dp(4));
-        directionRow.setBackground(rounded(Color.rgb(15, 39, 88)));
-        sourceFlag = makeText("🇺🇸", 18, Color.WHITE);
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams contentLp = new LinearLayout.LayoutParams(-1, -2);
+        contentLp.topMargin = dp(3);
+        panel.addView(content, contentLp);
+
+        LinearLayout inputRow = new LinearLayout(this);
+        inputRow.setGravity(Gravity.CENTER_VERTICAL);
+        inputRow.setPadding(dp(4), dp(3), dp(4), dp(3));
+        inputRow.setBackground(rounded(Color.rgb(9, 29, 66)));
+        sourceFlag = makeText("🇺🇸", 21, Color.WHITE);
         sourceFlag.setGravity(Gravity.CENTER);
-        sourceFlag.setBackground(circularIcon(Color.rgb(18, 55, 120)));
-        direction = makeText("NORTEAMERICANO  ➜  ARGENTINO", 11, Color.WHITE);
-        direction.setTypeface(null, Typeface.BOLD);
-        direction.setGravity(Gravity.CENTER);
-        direction.setPadding(dp(8), dp(4), dp(8), dp(4));
-        targetFlag = makeText("🇦🇷", 18, Color.WHITE);
+        sourceFlag.setBackground(circularIcon(Color.rgb(11, 49, 106)));
+        LinearLayout.LayoutParams sourceLp = new LinearLayout.LayoutParams(dp(42), dp(42));
+        sourceLp.rightMargin = dp(6);
+        inputRow.addView(sourceFlag, sourceLp);
+
+        input = new EditText(this);
+        input.setHint("Escribí una palabra o frase");
+        input.setTextColor(Color.WHITE);
+        input.setHintTextColor(Color.rgb(165, 184, 211));
+        input.setTextSize(14);
+        input.setSingleLine(false);
+        input.setMinLines(1);
+        input.setMaxLines(2);
+        input.setPadding(dp(8), dp(4), dp(5), dp(4));
+        GradientDrawable editBg = rounded(Color.rgb(12, 38, 81));
+        editBg.setStroke(dp(1), Color.rgb(31, 119, 207));
+        input.setBackground(editBg);
+        inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(44), 1));
+
+        Button mic = makeButton("🎙");
+        styleRoundButton(mic, Color.rgb(14, 93, 170), 18);
+        LinearLayout.LayoutParams micLp = new LinearLayout.LayoutParams(dp(44), dp(44));
+        micLp.leftMargin = dp(6);
+        inputRow.addView(mic, micLp);
+        content.addView(inputRow);
+
+        LinearLayout actions = new LinearLayout(this);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams actionsLp = new LinearLayout.LayoutParams(-1, -2);
+        actionsLp.topMargin = dp(7);
+        content.addView(actions, actionsLp);
+        Button swap = makeButton("⇄");
+        styleRoundButton(swap, Color.rgb(14, 58, 119), 23);
+        GradientDrawable swapBg = circularIcon(Color.rgb(14, 58, 119));
+        swap.setBackground(swapBg);
+        LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(48), dp(48));
+        swapLp.rightMargin = dp(7);
+        actions.addView(swap, swapLp);
+
+        Button translate = makeButton("✦  TRADUCIR");
+        translate.setTextColor(Color.rgb(1, 28, 61));
+        translate.setTextSize(15);
+        translate.setTypeface(null, Typeface.BOLD);
+        GradientDrawable translateBg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.rgb(37, 240, 238), Color.rgb(0, 167, 226)});
+        translateBg.setCornerRadius(dp(24));
+        translateBg.setStroke(dp(1), Color.rgb(131, 255, 255));
+        translate.setBackground(translateBg);
+        actions.addView(translate, new LinearLayout.LayoutParams(0, dp(48), 1));
+
+        LinearLayout output = new LinearLayout(this);
+        output.setGravity(Gravity.CENTER_VERTICAL);
+        output.setPadding(dp(4), dp(3), dp(4), dp(3));
+        GradientDrawable outputBg = rounded(Color.rgb(8, 28, 63));
+        outputBg.setStroke(dp(1), Color.rgb(29, 100, 179));
+        output.setBackground(outputBg);
+        LinearLayout.LayoutParams outputLp = new LinearLayout.LayoutParams(-1, -2);
+        outputLp.topMargin = dp(7);
+        content.addView(output, outputLp);
+        targetFlag = makeText("🇦🇷", 21, Color.WHITE);
         targetFlag.setGravity(Gravity.CENTER);
-        targetFlag.setBackground(circularIcon(Color.rgb(18, 55, 120)));
-        int flagSize = dp(34);
-        directionRow.addView(sourceFlag, new LinearLayout.LayoutParams(flagSize, flagSize));
-        directionRow.addView(direction, new LinearLayout.LayoutParams(0, -2, 1));
-        directionRow.addView(targetFlag, new LinearLayout.LayoutParams(flagSize, flagSize));
-        panel.addView(directionRow);
-        directionRow.setOnClickListener(v -> switchDirection());
+        targetFlag.setBackground(circularIcon(Color.rgb(11, 49, 106)));
+        LinearLayout.LayoutParams targetLp = new LinearLayout.LayoutParams(dp(42), dp(42));
+        targetLp.rightMargin = dp(6);
+        output.addView(targetFlag, targetLp);
+        result = makeText("La traducción aparecerá aquí.", 14, Color.WHITE);
+        result.setGravity(Gravity.CENTER_VERTICAL);
+        result.setPadding(dp(6), dp(5), dp(4), dp(5));
+        result.setMinHeight(dp(42));
+        output.addView(result, new LinearLayout.LayoutParams(0, -2, 1));
+
+        Button speak = makeButton("🔊");
+        styleRoundButton(speak, Color.rgb(15, 69, 132), 18);
+        LinearLayout.LayoutParams speakLp = new LinearLayout.LayoutParams(dp(42), dp(42));
+        speakLp.leftMargin = dp(4);
+        output.addView(speak, speakLp);
+        Button copy = makeButton("▣");
+        styleRoundButton(copy, Color.rgb(15, 69, 132), 18);
+        LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(dp(42), dp(42));
+        copyLp.leftMargin = dp(4);
+        output.addView(copy, copyLp);
+
+        LinearLayout footer = new LinearLayout(this);
+        footer.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        TextView hint = makeText("⠿ MOVER  ·  🤏 PELLIZCAR PARA AJUSTAR", 8, Color.rgb(152, 203, 245));
+        hint.setPadding(dp(4), dp(3), dp(4), 0);
+        footer.addView(hint);
+        content.addView(footer);
+
         sourceFlag.setOnClickListener(v -> switchDirection());
         targetFlag.setOnClickListener(v -> switchDirection());
         direction.setOnClickListener(v -> switchDirection());
 
-        LinearLayout inputRow = new LinearLayout(this);
-        inputRow.setGravity(Gravity.CENTER_VERTICAL); inputRow.setPadding(dp(5), 0, dp(4), 0);
-        GradientDrawable inputBg = rounded(Color.rgb(10, 30, 68));
-        inputBg.setStroke(dp(1), Color.rgb(75, 167, 255));
-        inputRow.setBackground(inputBg);
-        input = new EditText(this); input.setHint("Escribí una palabra o frase");
-        input.setTextColor(Color.WHITE); input.setHintTextColor(Color.LTGRAY);
-        input.setTextSize(15); input.setMinLines(1); input.setMaxLines(3);
-        input.setPadding(dp(8), dp(6), dp(4), dp(6));
-        input.setBackgroundColor(Color.TRANSPARENT);
-        inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(36), 1));
-        Button mic = makeButton("🎙");
-        mic.setTextColor(Color.WHITE); mic.setTextSize(17);
-        GradientDrawable micGlow = rounded(Color.rgb(41, 112, 218));
-        micGlow.setCornerRadius(dp(24));
-        micGlow.setStroke(dp(1), Color.rgb(70, 172, 255));
-        mic.setBackground(micGlow);
-        inputRow.addView(mic, new LinearLayout.LayoutParams(dp(36), dp(36)));
-        panel.addView(inputRow);
-
-        LinearLayout actions = new LinearLayout(this);
-        Button swap = makeButton("⇄"), translate = makeButton("✦  TRADUCIR");
-        swap.setTextColor(Color.WHITE);
-        GradientDrawable swapBg = circularIcon(Color.rgb(27, 63, 124));
-        swap.setTextSize(23);
-        swap.setBackground(swapBg);
-        translate.setTextColor(Color.WHITE); translate.setTypeface(null, Typeface.BOLD);
-        GradientDrawable translateBg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[]{Color.rgb(0, 205, 220), Color.rgb(0, 139, 214)});
-        translateBg.setCornerRadius(dp(18));
-        translateBg.setStroke(dp(1), Color.rgb(104, 246, 255));
-        translate.setBackground(translateBg);
-        LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(40), dp(40)); swapLp.topMargin = dp(8);
-        actions.addView(swap, swapLp);
-        LinearLayout.LayoutParams translateLp = new LinearLayout.LayoutParams(0, dp(40), 1); translateLp.leftMargin = dp(8); translateLp.topMargin = dp(8);
-        actions.addView(translate, translateLp); panel.addView(actions);
-        result = makeText("La traducción aparecerá aquí.", 16, Color.WHITE);
-        result.setPadding(dp(9), dp(8), dp(9), dp(8));
-        GradientDrawable resultBg = rounded(Color.rgb(12, 35, 79));
-        resultBg.setStroke(dp(1), Color.rgb(47, 126, 226));
-        result.setBackground(resultBg);
-        LinearLayout.LayoutParams resultLp = new LinearLayout.LayoutParams(-1, -2); resultLp.topMargin = dp(10);
-        panel.addView(result, resultLp);
-        LinearLayout output = new LinearLayout(this); output.setGravity(Gravity.CENTER_VERTICAL);
-        Button speak = makeButton("🔊 Escuchar"), copy = makeButton("Copiar");
-        speak.setTextColor(Color.WHITE);
-        GradientDrawable speakBg = rounded(Color.rgb(27, 63, 124));
-        speakBg.setStroke(dp(1), Color.rgb(45, 109, 190)); speak.setBackground(speakBg);
-        copy.setTextColor(Color.WHITE);
-        GradientDrawable copyBg = rounded(Color.rgb(27, 63, 124));
-        copyBg.setStroke(dp(1), Color.rgb(45, 109, 190)); copy.setBackground(copyBg);
-        LinearLayout.LayoutParams speakLp = new LinearLayout.LayoutParams(0, dp(44), 1); speakLp.topMargin = dp(8);
-        output.addView(speak, speakLp);
-        LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(0, dp(44), 1); copyLp.leftMargin = dp(8); copyLp.topMargin = dp(8);
-        output.addView(copy, copyLp); panel.addView(output);
-        TextView hint = makeText("⠿ MOVER  ·  🤏 PELLIZCAR", 8, Color.rgb(184, 216, 255));
-        hint.setPadding(0, dp(4), 0, 0); panel.addView(hint);
-
         int type = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
-        // Start compact: target about one quarter of the phone's visible area.
-        // Width is responsive to screen size and deliberately capped so the overlay
-        // does not cover the video like the previous near-half-screen layout.
-        int screenWidthDp = (int)(screenWidth / getResources().getDisplayMetrics().density);
-        int initialWidthDp = Math.max(165, Math.min(205, (int)(screenWidthDp * 0.44f)));
-        params = new WindowManager.LayoutParams(dp(initialWidthDp), WindowManager.LayoutParams.WRAP_CONTENT, type,
+        int initialWidth = Math.min(screenWidth - dp(16), Math.max(dp(270), (int)(screenWidth * 0.94f)));
+        params = new WindowManager.LayoutParams(initialWidth, WindowManager.LayoutParams.WRAP_CONTENT, type,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.TOP | Gravity.START; params.x = dp(8); params.y = dp(96);
+        params.gravity = Gravity.TOP | Gravity.START;
+        params.x = dp(8);
+        params.y = dp(96);
         params.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
 
         header.setOnTouchListener(new View.OnTouchListener() {
-            float downX, downY; int startX, startY;
+            float downX, downY;
+            int startX, startY;
             @Override public boolean onTouch(View v, MotionEvent e) {
                 switch (e.getActionMasked()) {
                     case MotionEvent.ACTION_DOWN:
-                        downX = e.getRawX(); downY = e.getRawY(); startX = params.x; startY = params.y; return true;
+                        downX = e.getRawX(); downY = e.getRawY();
+                        startX = params.x; startY = params.y;
+                        return true;
                     case MotionEvent.ACTION_MOVE:
-                        params.x = Math.max(0, Math.min(screenWidth - panel.getWidth(), startX + (int)(e.getRawX()-downX)));
-                        params.y = Math.max(0, Math.min(screenHeight - dp(80), startY + (int)(e.getRawY()-downY)));
+                        params.x = Math.max(0, Math.min(screenWidth - panel.getWidth(),
+                                startX + (int)(e.getRawX() - downX)));
+                        params.y = Math.max(0, Math.min(screenHeight - dp(80),
+                                startY + (int)(e.getRawY() - downY)));
                         try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
                         return true;
-                    case MotionEvent.ACTION_UP: case MotionEvent.ACTION_CANCEL: return true;
-                    default: return false;
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        return true;
+                    default:
+                        return false;
                 }
             }
         });
+
         minimizeButton.setOnClickListener(v -> {
             minimized = !minimized;
-            inputRow.setVisibility(minimized ? View.GONE : View.VISIBLE);
-            actions.setVisibility(minimized ? View.GONE : View.VISIBLE);
-            result.setVisibility(minimized ? View.GONE : View.VISIBLE);
-            output.setVisibility(minimized ? View.GONE : View.VISIBLE);
-            hint.setVisibility(minimized ? View.GONE : View.VISIBLE);
-            directionRow.setVisibility(minimized ? View.GONE : View.VISIBLE);
-            minimizeButton.setText(minimized ? "+" : "—");
+            content.setVisibility(minimized ? View.GONE : View.VISIBLE);
+            minimizeButton.setText(minimized ? "+" : "−");
             params.height = WindowManager.LayoutParams.WRAP_CONTENT;
             try { wm.updateViewLayout(panel, params); } catch (Exception ignored) { }
         });
@@ -329,8 +350,7 @@ public class OverlayService extends Service {
         copy.setOnClickListener(v -> {
             String value = result.getText().toString().trim();
             if (value.isEmpty() || value.equals("La traducción aparecerá aquí.")
-                    || value.equals("Traduciendo…")
-                    || value.equals("Escribí o dictá algo primero.")
+                    || value.equals("Traduciendo…") || value.equals("Escribí o dictá algo primero.")
                     || value.startsWith("No se pudo traducir.")) {
                 Toast.makeText(this, "Primero obtené una traducción.", Toast.LENGTH_SHORT).show();
                 return;
@@ -340,6 +360,15 @@ public class OverlayService extends Service {
             Toast.makeText(this, "Traducción copiada", Toast.LENGTH_SHORT).show();
         });
         try { wm.addView(panel, params); } catch (Exception e) { stopSelf(); }
+    }
+
+    private void styleRoundButton(Button button, int color, int textSize) {
+        button.setTextColor(Color.WHITE);
+        button.setTextSize(textSize);
+        button.setAllCaps(false);
+        button.setPadding(0, 0, 0, 0);
+        GradientDrawable bg = circularIcon(color);
+        button.setBackground(bg);
     }
 
     private void switchDirection() {
