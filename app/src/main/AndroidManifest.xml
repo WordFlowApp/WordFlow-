@@ -1,4 +1,4 @@
-
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Android 11+ package visibility for system speech services. -->
@@ -20,8 +20,8 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_wordflow2_launcher"
-        android:roundIcon="@drawable/ic_wordflow2_launcher"
+        android:icon="@mipmap/ic_wordflow"
+        android:roundIcon="@mipmap/ic_wordflow"
         android:label="WordFlow 2"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
