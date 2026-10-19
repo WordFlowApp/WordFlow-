@@ -465,7 +465,18 @@ public class OverlayService extends Service {
                         : localizeNorthAmericanEnglish(source, translated);
                 main.post(() -> result.setText(finalText));
             } catch (Exception e) {
-                main.post(() -> result.setText("No se pudo traducir. Revisá internet e intentá otra vez."));
+                // If the network translator is unavailable, still serve exact, known
+                // expressions locally in either direction instead of failing outright.
+                final String fallback = toArgentine
+                        ? localizeArgentineSpanish(source, source)
+                        : localizeNorthAmericanEnglish(source, source);
+                main.post(() -> {
+                    if (fallback != null && !fallback.equals(source)) {
+                        result.setText(fallback);
+                    } else {
+                        result.setText("No se pudo traducir. Revisá internet e intentá otra vez.");
+                    }
+                });
             } finally { if (connection != null) connection.disconnect(); }
         });
     }
@@ -492,6 +503,35 @@ public class OverlayService extends Service {
                 return "¿Qué onda?";
             case "what are you doing":
                 return "¿Qué estás haciendo?";
+            case "where are you":
+                return "¿Dónde estás?";
+            case "i'm on my way":
+            case "im on my way":
+                return "Ya estoy yendo.";
+            case "i'm running late":
+            case "im running late":
+                return "Voy a llegar tarde.";
+            case "hang on":
+            case "hold on":
+                return "Pará un segundo.";
+            case "sounds good":
+                return "Dale, buenísimo.";
+            case "that's fine":
+            case "thats fine":
+                return "Está bien.";
+            case "i'm kidding":
+            case "im kidding":
+                return "Estoy jodiendo.";
+            case "i'm tired":
+            case "im tired":
+                return "Estoy cansado.";
+            case "i'm so tired":
+            case "im so tired":
+                return "Estoy hecho bolsa.";
+            case "i miss you":
+                return "Te extraño.";
+            case "take care":
+                return "Cuidate.";
             case "no problem":
                 return "No hay drama.";
             case "let's go":
