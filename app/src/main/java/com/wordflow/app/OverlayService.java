@@ -209,7 +209,7 @@ public class OverlayService extends Service {
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setPadding(dp(7), dp(1), dp(2), dp(2));
-        TextView title = makeText("WordFlow 2", 18, Color.WHITE);
+        TextView title = makeText("Workflow", 18, Color.WHITE);
         title.setTypeface(null, Typeface.BOLD);
         header.addView(title, new LinearLayout.LayoutParams(0, dp(42), 1.05f));
         direction = makeText("", 10, Color.rgb(117, 231, 255));
