@@ -7,11 +7,10 @@ android {
     compileSdk 35
 
     defaultConfig {
-        // Side-by-side test package: preserves the user's installed WordFlow 2.
-        applicationId 'com.wordflow2.app'
-        applicationIdSuffix '.test'
-        versionCode 137
-        versionName '2.1.4-test'
+        // Initial public-facing app identity for WordFlow Real.
+        applicationId 'com.wordflow.real'
+        versionCode 1
+        versionName '1.0.0'
         minSdk 26
         targetSdk 35
     }
