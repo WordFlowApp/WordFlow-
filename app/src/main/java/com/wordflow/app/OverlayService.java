@@ -3,6 +3,7 @@ package com.wordflow.app;
 import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationChannel;
+import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.ClipData;
@@ -52,7 +53,40 @@ public class OverlayService extends Service {
     private TextView result, direction, sourceFlag, targetFlag;
     private TextToSpeech tts;
     private SpeechRecognizer recognizer;
-    private boolean ttsReady, northToArgentine = true, minimized;
+    private boolean ttsReady, minimized;
+    private Language sourceLanguage = LANGUAGES[0];
+    private Language targetLanguage = LANGUAGES[1];
+
+    private static final class Language {
+        final String name, flag, displayCode, localeTag, apiCode;
+        Language(String name, String flag, String displayCode, String localeTag, String apiCode) {
+            this.name = name; this.flag = flag; this.displayCode = displayCode;
+            this.localeTag = localeTag; this.apiCode = apiCode;
+        }
+        String label() { return flag + " " + displayCode; }
+    }
+
+    // 18 languages, with Argentine Spanish as the default destination.
+    private static final Language[] LANGUAGES = new Language[] {
+        new Language("English (United States)", "🇺🇸", "USA", "en-US", "en"),
+        new Language("Español argentino", "🇦🇷", "ARG", "es-AR", "es"),
+        new Language("Português (Brasil)", "🇧🇷", "BRA", "pt-BR", "pt"),
+        new Language("Français", "🇫🇷", "FRA", "fr-FR", "fr"),
+        new Language("Deutsch", "🇩🇪", "DEU", "de-DE", "de"),
+        new Language("Italiano", "🇮🇹", "ITA", "it-IT", "it"),
+        new Language("اردو (پاکستان)", "🇵🇰", "PAK", "ur-PK", "ur"),
+        new Language("العربية", "🇸🇦", "SAU", "ar-SA", "ar"),
+        new Language("हिन्दी", "🇮🇳", "IND", "hi-IN", "hi"),
+        new Language("中文（普通话）", "🇨🇳", "CHN", "zh-CN", "zh-CN"),
+        new Language("日本語", "🇯🇵", "JPN", "ja-JP", "ja"),
+        new Language("한국어", "🇰🇷", "KOR", "ko-KR", "ko"),
+        new Language("Русский", "🇷🇺", "RUS", "ru-RU", "ru"),
+        new Language("Türkçe", "🇹🇷", "TUR", "tr-TR", "tr"),
+        new Language("Bahasa Indonesia", "🇮🇩", "IDN", "id-ID", "id"),
+        new Language("বাংলা", "🇧🇩", "BGD", "bn-BD", "bn"),
+        new Language("ไทย", "🇹🇭", "THA", "th-TH", "th"),
+        new Language("Tiếng Việt", "🇻🇳", "VNM", "vi-VN", "vi")
+    };
     private int screenWidth, screenHeight;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -178,8 +212,8 @@ public class OverlayService extends Service {
         TextView title = makeText("WordFlow2", 17, Color.WHITE);
         title.setTypeface(null, Typeface.BOLD);
         header.addView(title, new LinearLayout.LayoutParams(0, dp(36), 1));
-        direction = makeText(northToArgentine ? "🇺🇸 USA  ➜  🇦🇷 ARG" : "🇦🇷 ARG  ➜  🇺🇸 USA",
-                9, Color.rgb(117, 231, 255));
+        direction = makeText("", 9, Color.rgb(117, 231, 255));
+        updateLanguageLabels();
         direction.setGravity(Gravity.CENTER);
         direction.setTypeface(null, Typeface.BOLD);
         header.addView(direction, new LinearLayout.LayoutParams(0, dp(36), 1));
@@ -205,7 +239,7 @@ public class OverlayService extends Service {
         inputRow.setGravity(Gravity.CENTER_VERTICAL);
         inputRow.setPadding(dp(4), dp(3), dp(4), dp(3));
         inputRow.setBackground(rounded(Color.rgb(9, 29, 66)));
-        sourceFlag = makeText("🇺🇸", 21, Color.WHITE);
+        sourceFlag = makeText(sourceLanguage.flag, 21, Color.WHITE);
         sourceFlag.setGravity(Gravity.CENTER);
         sourceFlag.setBackground(circularIcon(Color.rgb(11, 49, 106)));
         LinearLayout.LayoutParams sourceLp = new LinearLayout.LayoutParams(dp(42), dp(42));
@@ -266,7 +300,7 @@ public class OverlayService extends Service {
         LinearLayout.LayoutParams outputLp = new LinearLayout.LayoutParams(-1, -2);
         outputLp.topMargin = dp(7);
         content.addView(output, outputLp);
-        targetFlag = makeText("🇦🇷", 21, Color.WHITE);
+        targetFlag = makeText(targetLanguage.flag, 21, Color.WHITE);
         targetFlag.setGravity(Gravity.CENTER);
         targetFlag.setBackground(circularIcon(Color.rgb(11, 49, 106)));
         LinearLayout.LayoutParams targetLp = new LinearLayout.LayoutParams(dp(42), dp(42));
@@ -296,9 +330,9 @@ public class OverlayService extends Service {
         footer.addView(hint);
         content.addView(footer);
 
-        sourceFlag.setOnClickListener(v -> switchDirection());
-        targetFlag.setOnClickListener(v -> switchDirection());
-        direction.setOnClickListener(v -> switchDirection());
+        sourceFlag.setOnClickListener(v -> showLanguagePicker(true));
+        targetFlag.setOnClickListener(v -> showLanguagePicker(false));
+        direction.setOnClickListener(v -> showLanguagePicker(true));
 
         int type = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
         int initialWidth = Math.min(screenWidth - dp(16), Math.max(dp(270), (int)(screenWidth * 0.94f)));
@@ -372,11 +406,44 @@ public class OverlayService extends Service {
     }
 
     private void switchDirection() {
-        northToArgentine = !northToArgentine;
-        direction.setText(northToArgentine ? "🇺🇸 USA  ➜  🇦🇷 ARG" : "🇦🇷 ARG  ➜  🇺🇸 USA");
-        sourceFlag.setText(northToArgentine ? "🇺🇸" : "🇦🇷");
-        targetFlag.setText(northToArgentine ? "🇦🇷" : "🇺🇸");
+        Language previousSource = sourceLanguage;
+        sourceLanguage = targetLanguage;
+        targetLanguage = previousSource;
+        updateLanguageLabels();
         setSpeechLanguage();
+    }
+
+    private void updateLanguageLabels() {
+        if (direction != null) direction.setText(sourceLanguage.label() + "  ➜  " + targetLanguage.label());
+        if (sourceFlag != null) sourceFlag.setText(sourceLanguage.flag);
+        if (targetFlag != null) targetFlag.setText(targetLanguage.flag);
+    }
+
+    private void showLanguagePicker(boolean chooseSource) {
+        Language selected = chooseSource ? sourceLanguage : targetLanguage;
+        String[] names = new String[LANGUAGES.length];
+        int selectedIndex = 0;
+        for (int i = 0; i < LANGUAGES.length; i++) {
+            names[i] = LANGUAGES[i].flag + "  " + LANGUAGES[i].name + " (" + LANGUAGES[i].displayCode + ")";
+            if (LANGUAGES[i].localeTag.equals(selected.localeTag)) selectedIndex = i;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(chooseSource ? "Idioma de origen" : "Idioma de destino")
+                .setSingleChoiceItems(names, selectedIndex, (dialog, which) -> {
+                    Language choice = LANGUAGES[which];
+                    Language other = chooseSource ? targetLanguage : sourceLanguage;
+                    if (choice.localeTag.equals(other.localeTag)) {
+                        Toast.makeText(this, "Elegí dos idiomas diferentes.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (chooseSource) sourceLanguage = choice;
+                    else targetLanguage = choice;
+                    updateLanguageLabels();
+                    setSpeechLanguage();
+                    dialog.dismiss();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
     private void startVoiceRecognition() {
@@ -428,7 +495,7 @@ public class OverlayService extends Service {
             });
             Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, northToArgentine ? "en-US" : "es-AR");
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, sourceLanguage.localeTag);
             intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
             recognizer.startListening(intent);
         } catch (Exception e) {
@@ -440,15 +507,16 @@ public class OverlayService extends Service {
         String source = input.getText().toString().trim();
         if (source.isEmpty()) { result.setText("Escribí o dictá algo primero."); return; }
         result.setText("Traduciendo…");
-        final boolean toArgentine = northToArgentine;
+        final Language from = sourceLanguage;
+        final Language to = targetLanguage;
         worker.execute(() -> {
             HttpURLConnection connection = null;
             try {
-                String pair = toArgentine ? "en|es" : "es|en";
-                // Normalize common Argentine slang before sending it to the generic translator.
-                String translationInput = toArgentine
-                        ? source
-                        : ArgentineSpanishAdapter.prepareArgentineInputForTranslation(source);
+                String pair = from.apiCode + "|" + to.apiCode;
+                // Normalize Argentine slang only for the Argentine-Spanish -> US-English pair.
+                String translationInput = from.localeTag.equals("es-AR") && to.localeTag.equals("en-US")
+                        ? ArgentineSpanishAdapter.prepareArgentineInputForTranslation(source)
+                        : source;
                 String encoded = URLEncoder.encode(translationInput, "UTF-8");
                 URL url = new URL("https://api.mymemory.translated.net/get?q=" + encoded + "&langpair=" + pair);
                 connection = (HttpURLConnection)url.openConnection();
@@ -460,16 +528,26 @@ public class OverlayService extends Service {
                 JSONObject json = new JSONObject(response.toString());
                 String translated = json.getJSONObject("responseData").getString("translatedText");
                 translated = android.text.Html.fromHtml(translated, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim();
-                final String finalText = toArgentine
-                        ? localizeArgentineSpanish(source, translated)
-                        : localizeNorthAmericanEnglish(source, translated);
+                final String finalText;
+                if (to.localeTag.equals("es-AR") && from.localeTag.equals("en-US")) {
+                    finalText = localizeArgentineSpanish(source, translated);
+                } else if (to.localeTag.equals("en-US") && from.localeTag.equals("es-AR")) {
+                    finalText = localizeNorthAmericanEnglish(source, translated);
+                } else {
+                    finalText = translated;
+                }
                 main.post(() -> result.setText(finalText));
             } catch (Exception e) {
                 // If the network translator is unavailable, still serve exact, known
                 // expressions locally in either direction instead of failing outright.
-                final String fallback = toArgentine
-                        ? localizeArgentineSpanish(source, source)
-                        : localizeNorthAmericanEnglish(source, source);
+                final String fallback;
+                if (to.localeTag.equals("es-AR") && from.localeTag.equals("en-US")) {
+                    fallback = localizeArgentineSpanish(source, source);
+                } else if (to.localeTag.equals("en-US") && from.localeTag.equals("es-AR")) {
+                    fallback = localizeNorthAmericanEnglish(source, source);
+                } else {
+                    fallback = source;
+                }
                 main.post(() -> {
                     if (fallback != null && !fallback.equals(source)) {
                         result.setText(fallback);
@@ -618,7 +696,7 @@ public class OverlayService extends Service {
     }
 
     private void setSpeechLanguage() {
-        if (ttsReady && tts != null) tts.setLanguage(northToArgentine ? new Locale("es", "AR") : Locale.US);
+        if (ttsReady && tts != null) tts.setLanguage(Locale.forLanguageTag(targetLanguage.localeTag));
     }
 
     private void speakTranslation() {
