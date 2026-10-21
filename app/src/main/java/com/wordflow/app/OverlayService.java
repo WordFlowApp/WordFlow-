@@ -31,6 +31,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -496,7 +497,17 @@ public class OverlayService extends Service {
             cb.setPrimaryClip(ClipData.newPlainText("WordFlow", value));
             Toast.makeText(this, "Traducción copiada", Toast.LENGTH_SHORT).show();
         });
-        try { wm.addView(panel, params); } catch (Exception e) { stopSelf(); }
+        try {
+            wm.addView(panel, params);
+            Log.i("WordFlow", "Floating translator window attached successfully.");
+        } catch (Exception e) {
+            Log.e("WordFlow", "Could not attach floating translator window.", e);
+            Toast.makeText(this,
+                    "No se pudo mostrar la ventana flotante. Revisá el permiso «Mostrar sobre otras aplicaciones» y volvé a tocar Word Flow.",
+                    Toast.LENGTH_LONG).show();
+            stopForeground(true);
+            stopSelf();
+        }
     }
 
     private void styleRoundButton(Button button, int color, int textSize) {
