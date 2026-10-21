@@ -427,9 +427,9 @@ public class OverlayService extends Service {
             names[i] = LANGUAGES[i].flag + "  " + LANGUAGES[i].name + " (" + LANGUAGES[i].displayCode + ")";
             if (LANGUAGES[i].localeTag.equals(selected.localeTag)) selectedIndex = i;
         }
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(chooseSource ? "Idioma de origen" : "Idioma de destino")
-                .setSingleChoiceItems(names, selectedIndex, (dialog, which) -> {
+                .setSingleChoiceItems(names, selectedIndex, (dialogInterface, which) -> {
                     Language choice = LANGUAGES[which];
                     Language other = chooseSource ? targetLanguage : sourceLanguage;
                     if (choice.localeTag.equals(other.localeTag)) {
@@ -440,10 +440,15 @@ public class OverlayService extends Service {
                     else targetLanguage = choice;
                     updateLanguageLabels();
                     setSpeechLanguage();
-                    dialog.dismiss();
+                    dialogInterface.dismiss();
                 })
                 .setNegativeButton("Cancelar", null)
-                .show();
+                .create();
+        // The selector is opened from the floating service, so give its window overlay type.
+        if (dialog.getWindow() != null && Build.VERSION.SDK_INT >= 26) {
+            dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
+        }
+        dialog.show();
     }
 
     private void startVoiceRecognition() {
