@@ -261,7 +261,7 @@ public class OverlayService extends Service {
         inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(44), 1));
 
         Button mic = makeButton("🎙");
-        styleRoundButton(mic, Color.rgb(14, 93, 170), 28);
+        styleRoundButton(mic, Color.rgb(14, 93, 170), 32);
         mic.setContentDescription("Hablar");
         LinearLayout.LayoutParams micLp = new LinearLayout.LayoutParams(dp(44), dp(44));
         micLp.leftMargin = dp(6);
@@ -274,7 +274,7 @@ public class OverlayService extends Service {
         actionsLp.topMargin = dp(7);
         content.addView(actions, actionsLp);
         Button swap = makeButton("⇄");
-        styleRoundButton(swap, Color.rgb(14, 58, 119), 31);
+        styleRoundButton(swap, Color.rgb(14, 58, 119), 34);
         swap.setContentDescription("Invertir idiomas");
         GradientDrawable swapBg = circularIcon(Color.rgb(14, 58, 119));
         swap.setBackground(swapBg);
@@ -316,13 +316,13 @@ public class OverlayService extends Service {
         output.addView(result, new LinearLayout.LayoutParams(0, -2, 1));
 
         Button speak = makeButton("🔊");
-        styleRoundButton(speak, Color.rgb(15, 69, 132), 27);
+        styleRoundButton(speak, Color.rgb(15, 69, 132), 30);
         speak.setContentDescription("Escuchar traducción");
         LinearLayout.LayoutParams speakLp = new LinearLayout.LayoutParams(dp(42), dp(42));
         speakLp.leftMargin = dp(4);
         output.addView(speak, speakLp);
         Button copy = makeButton("▣");
-        styleRoundButton(copy, Color.rgb(15, 69, 132), 27);
+        styleRoundButton(copy, Color.rgb(15, 69, 132), 30);
         copy.setContentDescription("Copiar traducción");
         LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(dp(42), dp(42));
         copyLp.leftMargin = dp(4);
