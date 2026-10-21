@@ -4,79 +4,23 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.view.Gravity;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
     private static final int REQUEST_MICROPHONE = 1001;
     private boolean waitingForOverlayPermission = false;
-
-    private int dp(float value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
-    }
-
-    private GradientDrawable rounded(int color, int radiusDp) {
-        GradientDrawable d = new GradientDrawable();
-        d.setColor(color);
-        d.setCornerRadius(dp(radiusDp));
-        return d;
-    }
+    private boolean launchRequested = false;
 
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(Color.rgb(3, 14, 45));
-        getWindow().setNavigationBarColor(Color.rgb(3, 14, 45));
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.rgb(3, 14, 45));
-
-        ScrollView scroll = new ScrollView(this);
-        scroll.setFillViewport(true);
-        LinearLayout content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.setGravity(Gravity.CENTER_HORIZONTAL);
-        content.setPadding(dp(12), dp(12), dp(12), dp(22));
-
-        ImageView welcome = new ImageView(this);
-        welcome.setImageResource(R.drawable.wordflow_welcome);
-        welcome.setAdjustViewBounds(true);
-        welcome.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        welcome.setContentDescription("Presentación de WordFlow: traducción entre norteamericano y argentino.");
-        content.addView(welcome, new LinearLayout.LayoutParams(-1, -2));
-
-        // A real, visible call-to-action is required; the approved poster image
-        // itself does not contain a reliably tappable Android button.
-        Button start = new Button(this);
-        start.setText("🟡  TOCAR PARA INICIAR");
-        start.setAllCaps(false);
-        start.setTextSize(17);
-        start.setTypeface(null, Typeface.BOLD);
-        start.setTextColor(Color.rgb(3, 22, 55));
-        start.setPadding(dp(16), dp(8), dp(16), dp(8));
-        start.setBackground(rounded(Color.rgb(255, 204, 0), 28));
-        LinearLayout.LayoutParams startLp = new LinearLayout.LayoutParams(-1, dp(60));
-        startLp.topMargin = dp(14);
-        content.addView(start, startLp);
-        start.setOnClickListener(v -> startTranslator());
-
-        TextViewCompat.addFooter(this, content, dp(12));
-
-        scroll.addView(content);
-        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
-        setContentView(root);
+        // Skip the welcome/presentation screen: the app icon opens the
+        // floating translator directly after any required permissions.
+        startTranslator();
     }
 
     @Override
@@ -89,6 +33,8 @@ public class MainActivity extends Activity {
     }
 
     private void startTranslator() {
+        if (launchRequested) return;
+
         if (!Settings.canDrawOverlays(this)) {
             waitingForOverlayPermission = true;
             Intent permissionIntent = new Intent(
@@ -123,13 +69,15 @@ public class MainActivity extends Activity {
                 Toast.makeText(this,
                         "El dictado quedó desactivado. Podés usar WordFlow escribiendo el texto.",
                         Toast.LENGTH_LONG).show();
-                // Microphone permission is optional; do not block the translator.
+                // Microphone permission is optional; typing remains available.
                 launchOverlayService();
             }
         }
     }
 
     private void launchOverlayService() {
+        if (launchRequested) return;
+        launchRequested = true;
         try {
             Intent intent = new Intent(this, OverlayService.class);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -137,24 +85,12 @@ public class MainActivity extends Activity {
             } else {
                 startService(intent);
             }
-            Toast.makeText(this, "Iniciando la ventana flotante de WordFlow 2.",
-                    Toast.LENGTH_SHORT).show();
+            finish();
         } catch (Exception e) {
+            launchRequested = false;
             Toast.makeText(this,
                     "No se pudo iniciar la ventana flotante. Revisá los permisos e intentá nuevamente.",
                     Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private static final class TextViewCompat {
-        static void addFooter(Activity activity, LinearLayout parent, int padding) {
-            android.widget.TextView footer = new android.widget.TextView(activity);
-            footer.setText("Gratis  ·  Simple  ·  Rápido  ·  Para todos");
-            footer.setTextColor(Color.rgb(190, 214, 255));
-            footer.setTextSize(12);
-            footer.setGravity(Gravity.CENTER);
-            footer.setPadding(0, padding, 0, padding);
-            parent.addView(footer, new LinearLayout.LayoutParams(-1, -2));
         }
     }
 }
