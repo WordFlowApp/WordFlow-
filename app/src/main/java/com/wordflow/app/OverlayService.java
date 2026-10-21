@@ -239,10 +239,10 @@ public class OverlayService extends Service {
         inputRow.setGravity(Gravity.CENTER_VERTICAL);
         inputRow.setPadding(dp(4), dp(3), dp(4), dp(3));
         inputRow.setBackground(rounded(Color.rgb(9, 29, 66)));
-        sourceFlag = makeText(sourceLanguage.flag, 21, Color.WHITE);
+        sourceFlag = makeText(sourceLanguage.flag, 30, Color.WHITE);
         sourceFlag.setGravity(Gravity.CENTER);
         sourceFlag.setBackground(circularIcon(Color.rgb(11, 49, 106)));
-        LinearLayout.LayoutParams sourceLp = new LinearLayout.LayoutParams(dp(48), dp(48));
+        LinearLayout.LayoutParams sourceLp = new LinearLayout.LayoutParams(dp(54), dp(54));
         sourceLp.rightMargin = dp(6);
         inputRow.addView(sourceFlag, sourceLp);
 
@@ -307,10 +307,10 @@ public class OverlayService extends Service {
         LinearLayout.LayoutParams outputLp = new LinearLayout.LayoutParams(-1, -2);
         outputLp.topMargin = dp(7);
         content.addView(output, outputLp);
-        targetFlag = makeText(targetLanguage.flag, 21, Color.WHITE);
+        targetFlag = makeText(targetLanguage.flag, 30, Color.WHITE);
         targetFlag.setGravity(Gravity.CENTER);
         targetFlag.setBackground(circularIcon(Color.rgb(11, 49, 106)));
-        LinearLayout.LayoutParams targetLp = new LinearLayout.LayoutParams(dp(42), dp(42));
+        LinearLayout.LayoutParams targetLp = new LinearLayout.LayoutParams(dp(50), dp(50));
         targetLp.rightMargin = dp(6);
         output.addView(targetFlag, targetLp);
         result = makeText("La traducción aparecerá aquí.", 16, Color.WHITE);
