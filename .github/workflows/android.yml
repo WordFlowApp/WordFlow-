@@ -49,12 +49,12 @@ jobs:
         shell: bash
         run: |
           set -e
-          grep -q 'android:label="Workflow"' app/src/main/AndroidManifest.xml
+          grep -q 'android:label="Word Flow"' app/src/main/AndroidManifest.xml
           grep -q 'android:icon="@drawable/ic_wordflow_real"' app/src/main/AndroidManifest.xml
           test -s app/src/main/res/drawable/ic_wordflow_real.xml
           grep -q "applicationId 'com.wordflow.real'" app/build.gradle
           grep -q "versionName '3.0'" app/build.gradle
-          echo 'Identidad e icono de Workflow 3.0 verificados.'
+          echo 'Identidad e icono de Word Flow 3.0 verificados.'
 
       - name: Compilar APK
         uses: gradle/gradle-build-action@v3
