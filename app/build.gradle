@@ -7,10 +7,10 @@ android {
     compileSdk 35
 
     defaultConfig {
-        // Initial public-facing app identity for WordFlow Real.
-        applicationId 'com.wordflow.real'
-        versionCode 3
-        versionName '3.0'
+        // Keep the existing installed package so this APK updates the same app.
+        applicationId 'com.wordflow2.app.test'
+        versionCode 4
+        versionName '3.1'
         minSdk 26
         targetSdk 35
     }
