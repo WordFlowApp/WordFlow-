@@ -59,6 +59,14 @@ jobs:
           ! find app/src/main/res/mipmap-* -name 'ic_wordflow.png' | grep -q .
           grep -q "applicationId 'com.wordflow2.app.test'" app/build.gradle
           grep -q "versionName '3.1'" app/build.gradle
+          grep -q 'android:name=".MainActivity"' app/src/main/AndroidManifest.xml
+          grep -q 'android:name=".OverlayService"' app/src/main/AndroidManifest.xml
+          grep -q 'android:launchMode="singleTop"' app/src/main/AndroidManifest.xml
+          ! grep -Eqi 'PresentationActivity|WelcomeActivity|SplashActivity|YellowButtonActivity' app/src/main/AndroidManifest.xml
+          grep -q 'openTranslator();' app/src/main/java/com/wordflow/app/MainActivity.java
+          grep -q 'startForegroundService(serviceIntent)' app/src/main/java/com/wordflow/app/MainActivity.java
+          ! find app/src/main/res -type f | grep -Eqi '/(layout|layout-land)/.*(presentation|welcome|splash)'
+          echo 'Flujo directo icono -> MainActivity -> OverlayService verificado.'
           echo 'Identidad e icono de Word Flow 3.0 verificados.'
 
       - name: Compilar APK
