@@ -26,7 +26,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_wordflow"
         android:roundIcon="@mipmap/ic_wordflow"
-        android:label="WordFlow 2 TEST"
+        android:label="WordFlow Real"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
         <activity
