@@ -32,6 +32,19 @@ jobs:
       - name: Preparar Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Verificar catalogo de 18 idiomas
+        shell: bash
+        run: |
+          set -e
+          SOURCE='app/src/main/java/com/wordflow/app/OverlayService.java'
+          COUNT="$(grep -c 'new Language(' "$SOURCE")"
+          echo "Idiomas encontrados: $COUNT"
+          test "$COUNT" -eq 18
+          grep -q 'RecognizerIntent.EXTRA_LANGUAGE, sourceLanguage.localeTag' "$SOURCE"
+          grep -q 'Locale.forLanguageTag(targetLanguage.localeTag)' "$SOURCE"
+          ! grep -q 'northToArgentine' "$SOURCE"
+          echo 'Verificacion del catalogo y locales completada.'
+
       - name: Compilar APK
         uses: gradle/gradle-build-action@v3
         with:
