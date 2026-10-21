@@ -26,7 +26,7 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_wordflow_real"
         android:roundIcon="@drawable/ic_wordflow_real"
-        android:label="Workflow"
+        android:label="Word Flow"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
         <activity
