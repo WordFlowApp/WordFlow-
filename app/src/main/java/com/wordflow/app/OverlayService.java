@@ -122,11 +122,11 @@ public class OverlayService extends Service {
     private void createNotification() {
         String id = "wordflow_overlay";
         if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel channel = new NotificationChannel(id, "WordFlow flotante", NotificationManager.IMPORTANCE_LOW);
+            NotificationChannel channel = new NotificationChannel(id, "Word Flow flotante", NotificationManager.IMPORTANCE_LOW);
             ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(channel);
         }
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, id) : new Notification.Builder(this);
-        Notification n = b.setContentTitle("WordFlow está activo")
+        Notification n = b.setContentTitle("Word Flow está activo")
                 .setContentText("Tu traductor flotante está disponible")
                 .setSmallIcon(android.R.drawable.ic_menu_search).setOngoing(true).build();
         startForeground(7, n);
@@ -228,6 +228,20 @@ public class OverlayService extends Service {
                 }
             }
             canvas.restoreToCount(save);
+            // Glossy 3D-like finish: soft highlight and shaded lower rim.
+            Paint gloss = new Paint(Paint.ANTI_ALIAS_FLAG);
+            gloss.setShader(new android.graphics.LinearGradient(0, cy-radius, 0, cy+radius,
+                    new int[]{0x55FFFFFF, 0x08FFFFFF, 0x16000000, 0x55000000},
+                    new float[]{0f, 0.34f, 0.72f, 1f}, android.graphics.Shader.TileMode.CLAMP));
+            canvas.drawCircle(cx, cy, radius, gloss);
+            gloss.setShader(null);
+            gloss.setColor(0x70FFFFFF);
+            gloss.setStyle(Paint.Style.STROKE);
+            gloss.setStrokeWidth(dp(1.2f));
+            gloss.setStrokeWidth(dp(1.2f));
+            canvas.drawArc(cx-radius*0.78f, cy-radius*0.78f, cx+radius*0.78f, cy+radius*0.78f,
+                    205, 125, false, gloss);
+            gloss.setStyle(Paint.Style.FILL);
             // Bright cyan outline matches the app's approved visual identity.
             paint(canvas, Color.rgb(65, 183, 255));
             flagPaint.setStyle(Paint.Style.STROKE);
@@ -304,7 +318,7 @@ public class OverlayService extends Service {
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setPadding(dp(7), dp(1), dp(2), dp(2));
-        TextView title = makeText("Workflow", 18, Color.WHITE);
+        TextView title = makeText("Word Flow", 18, Color.WHITE);
         title.setTypeface(null, Typeface.BOLD);
         header.addView(title, new LinearLayout.LayoutParams(0, dp(42), 1.05f));
         direction = makeText("", 10, Color.rgb(117, 231, 255));
@@ -368,9 +382,9 @@ public class OverlayService extends Service {
         LinearLayout.LayoutParams actionsLp = new LinearLayout.LayoutParams(-1, -2);
         actionsLp.topMargin = dp(7);
         content.addView(actions, actionsLp);
-        Button swap = makeButton("⇄");
+        Button swap = makeButton("⤺\n⤻");
         styleRoundButton(swap, Color.rgb(14, 58, 119), 34);
-        swap.setContentDescription("Invertir idiomas");
+        swap.setContentDescription("Invertir idiomas con flechas curvas");
         swap.setMinimumWidth(dp(52));
         swap.setMinimumHeight(dp(52));
         GradientDrawable swapBg = circularIcon(Color.rgb(14, 58, 119));
@@ -660,6 +674,8 @@ public class OverlayService extends Service {
                     finalText = localizeArgentineSpanish(source, translated);
                 } else if (to.localeTag.equals("en-US") && from.localeTag.equals("es-AR")) {
                     finalText = localizeNorthAmericanEnglish(source, translated);
+                } else if (to.localeTag.equals("es-AR") && from.localeTag.equals("de-DE")) {
+                    finalText = localizeGermanToArgentineSpanish(source, translated);
                 } else {
                     finalText = translated;
                 }
@@ -684,6 +700,37 @@ public class OverlayService extends Service {
                 });
             } finally { if (connection != null) connection.disconnect(); }
         });
+    }
+
+    private String localizeGermanToArgentineSpanish(String source, String translated) {
+        if (source == null) return translated;
+        String normalized = source.trim().toLowerCase(Locale.GERMANY)
+                .replaceAll("[.!?]+$", "").trim();
+        switch (normalized) {
+            case "hallo": return "Hola.";
+            case "hi": return "Hola.";
+            case "guten morgen": return "Buen día.";
+            case "guten tag": return "Buen día.";
+            case "guten abend": return "Buenas tardes.";
+            case "gute nacht": return "Buenas noches.";
+            case "wie geht es dir":
+            case "wie geht's dir": return "¿Cómo andás?";
+            case "wie geht es ihnen": return "¿Cómo está?";
+            case "danke":
+            case "danke schön":
+            case "dankeschön": return "Gracias.";
+            case "bitte": return "Por favor.";
+            case "ja": return "Sí.";
+            case "nein": return "No.";
+            case "tschüss":
+            case "auf wiedersehen": return "Chau.";
+            case "ich liebe dich": return "Te quiero.";
+            case "ich verstehe nicht": return "No entiendo.";
+            case "wie heißt du": return "¿Cómo te llamás?";
+            case "was machst du": return "¿Qué estás haciendo?";
+            case "ich bin müde": return "Estoy cansado/a.";
+            default: return translated;
+        }
     }
 
     // Conservative phrase overrides keyed to the original English input.
