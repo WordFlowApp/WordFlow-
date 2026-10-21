@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Full-bleed navy rounded-square background; no white inset frame. -->
+    <path android:fillColor="#06142F" android:pathData="M18,0 L90,0 Q108,0 108,18 L108,90 Q108,108 90,108 L18,108 Q0,108 0,90 L0,18 Q0,0 18,0 Z"/>
+    <path android:fillColor="#092B61" android:pathData="M18,3 L90,3 Q105,3 105,18 L105,90 Q105,105 90,105 L18,105 Q3,105 3,90 L3,18 Q3,3 18,3 Z"/>
+    <path android:fillColor="#062044" android:pathData="M18,6 L90,6 Q102,6 102,18 L102,90 Q102,102 90,102 L18,102 Q6,102 6,90 L6,18 Q6,6 18,6 Z"/>
+    <!-- Globe -->
+    <path android:fillColor="#087FC4" android:pathData="M54,18 A25,25 0,1 0,54 68 A25,25 0,1 0,54 18 Z"/>
+    <path android:fillColor="#31D6F3" android:pathData="M54,21 A22,22 0,1 0,54 65 A22,22 0,1 0,54 21 Z"/>
+    <path android:fillColor="#087FC4" android:pathData="M42,28 L49,25 L53,31 L49,36 L52,42 L46,48 L43,58 L37,52 L35,44 L30,39 L34,32 Z"/>
+    <path android:fillColor="#087FC4" android:pathData="M63,32 L71,34 L76,41 L70,45 L68,52 L62,56 L57,48 L60,42 L56,38 Z"/>
+    <!-- USA speech bubble -->
+    <path android:fillColor="#FFFFFF" android:pathData="M15,14 L39,14 Q47,14 47,22 L47,31 Q47,39 39,39 L29,39 L22,45 L23,39 L15,39 Q8,39 8,31 L8,22 Q8,14 15,14 Z"/>
+    <path android:fillColor="#E8485B" android:pathData="M13,19 L42,19 L42,22 L13,22 Z M13,25 L42,25 L42,28 L13,28 Z M13,31 L42,31 L42,34 L13,34 Z"/>
+    <path android:fillColor="#164A9B" android:pathData="M13,17 L26,17 L26,28 L13,28 Z"/>
+    <!-- Argentina speech bubble -->
+    <path android:fillColor="#FFFFFF" android:pathData="M67,14 L92,14 Q100,14 100,22 L100,31 Q100,39 92,39 L84,39 L85,45 L78,39 L67,39 Q60,39 60,31 L60,22 Q60,14 67,14 Z"/>
+    <path android:fillColor="#50BDF5" android:pathData="M64,19 L96,19 L96,24 L64,24 Z M64,29 L96,29 L96,34 L64,34 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M64,24 L96,24 L96,29 L64,29 Z"/>
+    <path android:fillColor="#F6B938" android:pathData="M80,23 A3,3 0,1 0,80 29 A3,3 0,1 0,80 23 Z"/>
+    <!-- Opposing translation arrows -->
+    <path android:fillColor="#20DDF2" android:pathData="M15,61 L48,61 L48,55 L61,65 L48,75 L48,69 L15,69 Z"/>
+    <path android:fillColor="#FFB52E" android:pathData="M93,80 L60,80 L60,86 L47,76 L60,66 L60,72 L93,72 Z"/>
+    <!-- WordFlow wordmark -->
+    <path android:fillColor="#FFFFFF" android:pathData="M13,84 L16,84 L18,91 L20,84 L23,84 L25,91 L27,84 L30,84 L26,96 L23,96 L21,89 L19,96 L16,96 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M32,84 L35,84 L35,93 L41,93 L41,96 L32,96 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M43,84 L46,84 L46,96 L43,96 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M48,84 L51,84 L54,91 L57,84 L60,84 L55,96 L53,96 Z"/>
+    <path android:fillColor="#21D9F1" android:pathData="M62,84 L65,84 L65,96 L62,96 Z M68,84 L77,84 L77,87 L71,87 L71,89 L76,89 L76,92 L71,92 L71,93 L77,93 L77,96 L68,96 Z M80,84 L83,84 L83,93 L89,93 L89,96 L80,96 Z M91,84 L94,84 L94,96 L91,96 Z"/>
+    <path android:fillColor="#20DDF2" android:pathData="M29,98 L79,98 Q82,98 82,101 Q82,104 79,104 L29,104 Q26,104 26,101 Q26,98 29,98 Z"/>
+    <path android:fillColor="#06142F" android:pathData="M36,99 L39,99 L39,103 L36,103 Z M43,99 L46,99 L46,103 L43,103 Z M50,99 L53,99 L53,103 L50,103 Z M57,99 L60,99 L60,103 L57,103 Z M64,99 L67,99 L67,103 L64,103 Z M71,99 L74,99 L74,103 L71,103 Z"/>
+</vector>
