@@ -1,26 +1,23 @@
 package com.wordflow.app;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.widget.Toast;
 
+/** Launcher activity: no presentation screen; open the floating translator directly. */
 public class MainActivity extends Activity {
-    private static final int REQUEST_MICROPHONE = 1001;
     private boolean waitingForOverlayPermission = false;
     private boolean launchRequested = false;
 
     @Override
-    public void onCreate(Bundle state) {
+    protected void onCreate(Bundle state) {
         super.onCreate(state);
-        // Skip the welcome/presentation screen: the app icon opens the
-        // floating translator directly after any required permissions.
-        startTranslator();
+        // No layout, welcome screen, or microphone prompt at startup.
+        openTranslator();
     }
 
     @Override
@@ -28,68 +25,45 @@ public class MainActivity extends Activity {
         super.onResume();
         if (waitingForOverlayPermission && Settings.canDrawOverlays(this)) {
             waitingForOverlayPermission = false;
-            startTranslator();
+            openTranslator();
         }
     }
 
-    private void startTranslator() {
+    private void openTranslator() {
         if (launchRequested) return;
 
-        if (!Settings.canDrawOverlays(this)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                && !Settings.canDrawOverlays(this)) {
             waitingForOverlayPermission = true;
-            Intent permissionIntent = new Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
-            startActivity(permissionIntent);
             Toast.makeText(this,
-                    "Activá Mostrar sobre otras aplicaciones y volvé a Word Flow.",
+                    "Activá «Mostrar sobre otras aplicaciones» para abrir la ventana flotante.",
                     Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        if (Build.VERSION.SDK_INT >= 23
-                && checkSelfPermission(Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},
-                    REQUEST_MICROPHONE);
-            return;
-        }
-        launchOverlayService();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                           int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_MICROPHONE) {
-            if (grantResults.length > 0
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                launchOverlayService();
-            } else {
+            try {
+                startActivity(new Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + getPackageName())));
+            } catch (Exception e) {
+                waitingForOverlayPermission = false;
                 Toast.makeText(this,
-                        "El dictado quedó desactivado. Podés usar WordFlow escribiendo el texto.",
+                        "Abrí Ajustes y habilitá «Mostrar sobre otras aplicaciones» para Word Flow.",
                         Toast.LENGTH_LONG).show();
-                // Microphone permission is optional; typing remains available.
-                launchOverlayService();
             }
+            return;
         }
-    }
 
-    private void launchOverlayService() {
-        if (launchRequested) return;
         launchRequested = true;
         try {
-            Intent intent = new Intent(this, OverlayService.class);
+            Intent serviceIntent = new Intent(this, OverlayService.class);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent);
+                startForegroundService(serviceIntent);
             } else {
-                startService(intent);
+                startService(serviceIntent);
             }
             finish();
         } catch (Exception e) {
             launchRequested = false;
             Toast.makeText(this,
-                    "No se pudo iniciar la ventana flotante. Revisá los permisos e intentá nuevamente.",
+                    "Word Flow no pudo abrir la ventana. Revisá el permiso de superposición e intentá otra vez.",
                     Toast.LENGTH_LONG).show();
         }
     }
