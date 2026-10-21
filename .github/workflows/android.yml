@@ -45,6 +45,17 @@ jobs:
           ! grep -q 'northToArgentine' "$SOURCE"
           echo 'Verificacion del catalogo y locales completada.'
 
+      - name: Verificar identidad e icono WordFlow Real
+        shell: bash
+        run: |
+          set -e
+          grep -q 'android:label="WordFlow Real"' app/src/main/AndroidManifest.xml
+          grep -q 'android:icon="@drawable/ic_wordflow_real"' app/src/main/AndroidManifest.xml
+          test -s app/src/main/res/drawable/ic_wordflow_real.xml
+          grep -q "applicationId 'com.wordflow.real'" app/build.gradle
+          grep -q "versionName '1.0.0'" app/build.gradle
+          echo 'Identidad e icono de WordFlow Real verificados.'
+
       - name: Compilar APK
         uses: gradle/gradle-build-action@v3
         with:
