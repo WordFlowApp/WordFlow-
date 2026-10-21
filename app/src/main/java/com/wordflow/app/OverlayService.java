@@ -529,10 +529,16 @@ public class OverlayService extends Service {
 
     private void updateLanguageLabels() {
         if (direction != null) direction.setText(sourceLanguage.label() + "  ➜  " + targetLanguage.label());
-        if (sourceFlag != null) sourceFlag.setFlag(sourceLanguage.flag);
-        sourceFlag.setTextSize(38);
-        if (targetFlag != null) targetFlag.setFlag(targetLanguage.flag);
-        targetFlag.setTextSize(38);
+        // This method is called once before the flag views are created while building the header.
+        // Guard every flag access so startup cannot crash with a NullPointerException.
+        if (sourceFlag != null) {
+            sourceFlag.setFlag(sourceLanguage.flag);
+            sourceFlag.setTextSize(38);
+        }
+        if (targetFlag != null) {
+            targetFlag.setFlag(targetLanguage.flag);
+            targetFlag.setTextSize(38);
+        }
     }
 
     private void showLanguagePicker(boolean chooseSource) {
