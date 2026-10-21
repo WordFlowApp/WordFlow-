@@ -209,19 +209,19 @@ public class OverlayService extends Service {
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setPadding(dp(7), dp(1), dp(2), dp(2));
-        TextView title = makeText("WordFlow2", 17, Color.WHITE);
+        TextView title = makeText("WordFlow 2", 18, Color.WHITE);
         title.setTypeface(null, Typeface.BOLD);
-        header.addView(title, new LinearLayout.LayoutParams(0, dp(36), 1));
-        direction = makeText("", 9, Color.rgb(117, 231, 255));
+        header.addView(title, new LinearLayout.LayoutParams(0, dp(42), 1.05f));
+        direction = makeText("", 10, Color.rgb(117, 231, 255));
         updateLanguageLabels();
         direction.setGravity(Gravity.CENTER);
         direction.setTypeface(null, Typeface.BOLD);
-        header.addView(direction, new LinearLayout.LayoutParams(0, dp(36), 1));
+        header.addView(direction, new LinearLayout.LayoutParams(0, dp(42), 1.1f));
         Button minimizeButton = makeButton("−");
         Button closeButton = makeButton("×");
-        styleRoundButton(minimizeButton, Color.rgb(18, 83, 153), 19);
-        styleRoundButton(closeButton, Color.rgb(137, 35, 65), 22);
-        LinearLayout.LayoutParams controlLp = new LinearLayout.LayoutParams(dp(34), dp(34));
+        styleRoundButton(minimizeButton, Color.rgb(18, 83, 153), 23);
+        styleRoundButton(closeButton, Color.rgb(137, 35, 65), 26);
+        LinearLayout.LayoutParams controlLp = new LinearLayout.LayoutParams(dp(40), dp(40));
         controlLp.leftMargin = dp(4);
         header.addView(minimizeButton, controlLp);
         LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(dp(34), dp(34));
@@ -242,7 +242,7 @@ public class OverlayService extends Service {
         sourceFlag = makeText(sourceLanguage.flag, 21, Color.WHITE);
         sourceFlag.setGravity(Gravity.CENTER);
         sourceFlag.setBackground(circularIcon(Color.rgb(11, 49, 106)));
-        LinearLayout.LayoutParams sourceLp = new LinearLayout.LayoutParams(dp(42), dp(42));
+        LinearLayout.LayoutParams sourceLp = new LinearLayout.LayoutParams(dp(48), dp(48));
         sourceLp.rightMargin = dp(6);
         inputRow.addView(sourceFlag, sourceLp);
 
@@ -250,7 +250,7 @@ public class OverlayService extends Service {
         input.setHint("Escribí una palabra o frase");
         input.setTextColor(Color.WHITE);
         input.setHintTextColor(Color.rgb(165, 184, 211));
-        input.setTextSize(14);
+        input.setTextSize(16);
         input.setSingleLine(false);
         input.setMinLines(1);
         input.setMaxLines(2);
@@ -258,12 +258,14 @@ public class OverlayService extends Service {
         GradientDrawable editBg = rounded(Color.rgb(12, 38, 81));
         editBg.setStroke(dp(1), Color.rgb(31, 119, 207));
         input.setBackground(editBg);
-        inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(44), 1));
+        inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(48), 1));
 
         Button mic = makeButton("🎙");
         styleRoundButton(mic, Color.rgb(14, 93, 170), 32);
         mic.setContentDescription("Hablar");
-        LinearLayout.LayoutParams micLp = new LinearLayout.LayoutParams(dp(44), dp(44));
+        mic.setMinimumWidth(dp(48));
+        mic.setMinimumHeight(dp(48));
+        LinearLayout.LayoutParams micLp = new LinearLayout.LayoutParams(dp(52), dp(52));
         micLp.leftMargin = dp(6);
         inputRow.addView(mic, micLp);
         content.addView(inputRow);
@@ -276,6 +278,8 @@ public class OverlayService extends Service {
         Button swap = makeButton("⇄");
         styleRoundButton(swap, Color.rgb(14, 58, 119), 34);
         swap.setContentDescription("Invertir idiomas");
+        swap.setMinimumWidth(dp(52));
+        swap.setMinimumHeight(dp(52));
         GradientDrawable swapBg = circularIcon(Color.rgb(14, 58, 119));
         swap.setBackground(swapBg);
         LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(48), dp(48));
@@ -284,7 +288,7 @@ public class OverlayService extends Service {
 
         Button translate = makeButton("✦  TRADUCIR");
         translate.setTextColor(Color.rgb(1, 28, 61));
-        translate.setTextSize(17);
+        translate.setTextSize(18);
         translate.setContentDescription("Traducir");
         translate.setTypeface(null, Typeface.BOLD);
         GradientDrawable translateBg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
@@ -292,7 +296,7 @@ public class OverlayService extends Service {
         translateBg.setCornerRadius(dp(24));
         translateBg.setStroke(dp(1), Color.rgb(131, 255, 255));
         translate.setBackground(translateBg);
-        actions.addView(translate, new LinearLayout.LayoutParams(0, dp(48), 1));
+        actions.addView(translate, new LinearLayout.LayoutParams(0, dp(52), 1));
 
         LinearLayout output = new LinearLayout(this);
         output.setGravity(Gravity.CENTER_VERTICAL);
@@ -309,28 +313,32 @@ public class OverlayService extends Service {
         LinearLayout.LayoutParams targetLp = new LinearLayout.LayoutParams(dp(42), dp(42));
         targetLp.rightMargin = dp(6);
         output.addView(targetFlag, targetLp);
-        result = makeText("La traducción aparecerá aquí.", 14, Color.WHITE);
+        result = makeText("La traducción aparecerá aquí.", 16, Color.WHITE);
         result.setGravity(Gravity.CENTER_VERTICAL);
         result.setPadding(dp(6), dp(5), dp(4), dp(5));
-        result.setMinHeight(dp(42));
+        result.setMinHeight(dp(48));
         output.addView(result, new LinearLayout.LayoutParams(0, -2, 1));
 
         Button speak = makeButton("🔊");
-        styleRoundButton(speak, Color.rgb(15, 69, 132), 30);
+        styleRoundButton(speak, Color.rgb(15, 69, 132), 33);
         speak.setContentDescription("Escuchar traducción");
+        speak.setMinimumWidth(dp(48));
+        speak.setMinimumHeight(dp(48));
         LinearLayout.LayoutParams speakLp = new LinearLayout.LayoutParams(dp(42), dp(42));
         speakLp.leftMargin = dp(4);
         output.addView(speak, speakLp);
         Button copy = makeButton("▣");
-        styleRoundButton(copy, Color.rgb(15, 69, 132), 30);
+        styleRoundButton(copy, Color.rgb(15, 69, 132), 33);
         copy.setContentDescription("Copiar traducción");
+        copy.setMinimumWidth(dp(48));
+        copy.setMinimumHeight(dp(48));
         LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(dp(42), dp(42));
         copyLp.leftMargin = dp(4);
         output.addView(copy, copyLp);
 
         LinearLayout footer = new LinearLayout(this);
         footer.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-        TextView hint = makeText("⠿ MOVER  ·  🤏 PELLIZCAR PARA AJUSTAR", 8, Color.rgb(152, 203, 245));
+        TextView hint = makeText("⠿ ARRASTRAR  ·  🤏 AJUSTAR TAMAÑO", 9, Color.rgb(152, 203, 245));
         hint.setPadding(dp(4), dp(3), dp(4), 0);
         footer.addView(hint);
         content.addView(footer);
@@ -340,7 +348,7 @@ public class OverlayService extends Service {
         direction.setOnClickListener(v -> showLanguagePicker(true));
 
         int type = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
-        int initialWidth = Math.min(screenWidth - dp(16), Math.max(dp(270), (int)(screenWidth * 0.94f)));
+        int initialWidth = Math.max(dp(260), Math.min(screenWidth - dp(16), (int)(screenWidth * 0.96f)));
         params = new WindowManager.LayoutParams(initialWidth, WindowManager.LayoutParams.WRAP_CONTENT, type,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
