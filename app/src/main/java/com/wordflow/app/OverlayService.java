@@ -178,7 +178,7 @@ public class OverlayService extends Service {
         TextView title = makeText("WordFlow2", 17, Color.WHITE);
         title.setTypeface(null, Typeface.BOLD);
         header.addView(title, new LinearLayout.LayoutParams(0, dp(36), 1));
-        direction = makeText(northToArgentine ? "NORTEAMERICANO  ➜  ARGENTINO" : "ARGENTINO  ➜  NORTEAMERICANO",
+        direction = makeText(northToArgentine ? "🇺🇸 USA  ➜  🇦🇷 ARG" : "🇦🇷 ARG  ➜  🇺🇸 USA",
                 9, Color.rgb(117, 231, 255));
         direction.setGravity(Gravity.CENTER);
         direction.setTypeface(null, Typeface.BOLD);
@@ -373,7 +373,7 @@ public class OverlayService extends Service {
 
     private void switchDirection() {
         northToArgentine = !northToArgentine;
-        direction.setText(northToArgentine ? "NORTEAMERICANO  ➜  ARGENTINO" : "ARGENTINO  ➜  NORTEAMERICANO");
+        direction.setText(northToArgentine ? "🇺🇸 USA  ➜  🇦🇷 ARG" : "🇦🇷 ARG  ➜  🇺🇸 USA");
         sourceFlag.setText(northToArgentine ? "🇺🇸" : "🇦🇷");
         targetFlag.setText(northToArgentine ? "🇦🇷" : "🇺🇸");
         setSpeechLanguage();
