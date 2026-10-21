@@ -54,8 +54,11 @@ jobs:
           test -s app/src/main/res/drawable/ic_wordflow_foreground.xml
           test -s app/src/main/res/mipmap-anydpi-v26/ic_wordflow.xml
           test -s app/src/main/res/values/wordflow_icon.xml
-          grep -q "applicationId 'com.wordflow.real'" app/build.gradle
-          grep -q "versionName '3.0'" app/build.gradle
+          grep -q 'USA flag bubble' app/src/main/res/drawable/ic_wordflow_foreground.xml
+          grep -q 'Argentina flag bubble' app/src/main/res/drawable/ic_wordflow_foreground.xml
+          ! find app/src/main/res/mipmap-* -name 'ic_wordflow.png' | grep -q .
+          grep -q "applicationId 'com.wordflow2.app.test'" app/build.gradle
+          grep -q "versionName '3.1'" app/build.gradle
           echo 'Identidad e icono de Word Flow 3.0 verificados.'
 
       - name: Compilar APK
