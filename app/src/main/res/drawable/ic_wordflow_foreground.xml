@@ -1,25 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp" android:height="108dp"
-    android:viewportWidth="108" android:viewportHeight="108">
-    <!-- New approved identity: USA + Argentina flags with bidirectional arrows. -->
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Word Flow launcher: US and Argentine flags with a clear two-way exchange mark. -->
     <path android:fillColor="#06142F" android:pathData="M0,0 L108,0 L108,108 L0,108 Z"/>
-    <path android:fillColor="#0A2B61" android:pathData="M54,10 A44,44 0,1 0,54 98 A44,44 0,1 0,54 10 Z"/>
-    <path android:fillColor="#12BDEB" android:pathData="M54,14 A40,40 0,1 0,54 94 A40,40 0,1 0,54 14 Z"/>
-    <path android:fillColor="#06224D" android:pathData="M54,18 A36,36 0,1 0,54 90 A36,36 0,1 0,54 18 Z"/>
-    <!-- USA flag bubble -->
-    <path android:fillColor="#FFFFFF" android:pathData="M14,28 Q14,21 21,21 L43,21 Q49,21 49,28 L49,48 Q49,55 42,55 L32,55 L24,62 L25,55 L21,55 Q14,55 14,48 Z"/>
-    <path android:fillColor="#D92745" android:pathData="M17,25 L46,25 L46,28 L17,28 Z M17,31 L46,31 L46,34 L17,34 Z M17,37 L46,37 L46,40 L17,40 Z M17,43 L46,43 L46,46 L17,46 Z M17,49 L42,49 L42,52 L17,52 Z"/>
-    <path android:fillColor="#123C86" android:pathData="M17,24 L29,24 L29,38 L17,38 Z"/>
-    <path android:fillColor="#FFFFFF" android:pathData="M19,26 L20,26 L20,27 L19,27 Z M23,26 L24,26 L24,27 L23,27 Z M27,26 L28,26 L28,27 L27,27 Z M21,29 L22,29 L22,30 L21,30 Z M25,29 L26,29 L26,30 L25,30 Z M19,32 L20,32 L20,33 L19,33 Z M23,32 L24,32 L24,33 L23,33 Z M27,32 L28,32 L28,33 L27,33 Z M21,35 L22,35 L22,36 L21,36 Z M25,35 L26,35 L26,36 L25,36 Z"/>
-    <!-- Argentina flag bubble -->
-    <path android:fillColor="#FFFFFF" android:pathData="M65,21 L87,21 Q94,21 94,28 L94,48 Q94,55 87,55 L82,55 L83,62 L75,55 L65,55 Q59,55 59,48 L59,28 Q59,21 65,21 Z"/>
-    <path android:fillColor="#75C8F0" android:pathData="M62,25 L91,25 L91,35 L62,35 Z M62,42 L91,42 L91,52 L62,52 Z"/>
-    <path android:fillColor="#F6BD39" android:pathData="M76.5,35 A4.5,4.5 0,1 0,76.5 44 A4.5,4.5 0,1 0,76.5 35 Z"/>
-    <path android:fillColor="#FFFFFF" android:pathData="M76.5,36.5 A3,3 0,1 0,76.5 42.5 A3,3 0,1 0,76.5 36.5 Z"/>
-    <path android:fillColor="#F6BD39" android:pathData="M76.5,34 L77.5,36 L75.5,36 Z M76.5,44 L77.5,42 L75.5,42 Z M72.5,39.5 L74.5,38.5 L74.5,40.5 Z M80.5,39.5 L78.5,38.5 L78.5,40.5 Z"/>
-    <!-- Bright cyan and gold swap arrows between flags -->
-    <path android:fillColor="#25E3F1" android:pathData="M38,66 L68,66 L68,60 L80,69 L68,78 L68,72 L38,72 Z"/>
-    <path android:fillColor="#FFB52E" android:pathData="M70,82 L40,82 L40,88 L28,79 L40,70 L40,76 L70,76 Z"/>
-    <path android:fillColor="#FFFFFF" android:pathData="M16,13 L21,13 L21,16 L16,16 Z M87,91 L92,91 L92,94 L87,94 Z"/>
+    <path android:fillColor="#0A2B61" android:pathData="M54,5 A49,49 0,1 0,54 103 A49,49 0,1 0,54 5 Z"/>
+    <path android:fillColor="#06204A" android:pathData="M54,10 A44,44 0,1 0,54 98 A44,44 0,1 0,54 10 Z"/>
+    <path android:fillColor="#16D7F3" android:pathData="M54,10 A44,44 0,1 0,54 98 A44,44 0,1 0,54 10 Z"/>
+    <path android:fillColor="#06204A" android:pathData="M54,13 A41,41 0,1 0,54 95 A41,41 0,1 0,54 13 Z"/>
+
+    <!-- US flag, clipped to a round badge. -->
+    <path android:fillColor="#FFFFFF" android:pathData="M30,18 A19,19 0,1 0,30 56 A19,19 0,1 0,30 18 Z"/>
+    <clip-path android:name="us_flag_clip" android:pathData="M30,18 A19,19 0,1 0,30 56 A19,19 0,1 0,30 18 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M11,18 L49,18 L49,56 L11,56 Z"/>
+    <path android:fillColor="#D92745" android:pathData="M11,20 L49,20 L49,23 L11,23 Z M11,26 L49,26 L49,29 L11,29 Z M11,32 L49,32 L49,35 L11,35 Z M11,38 L49,38 L49,41 L11,41 Z M11,44 L49,44 L49,47 L11,47 Z M11,50 L49,50 L49,53 L11,53 Z"/>
+    <path android:fillColor="#123C86" android:pathData="M11,18 L29,18 L29,36 L11,36 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M15,21 L17,21 L17,23 L15,23 Z M21,21 L23,21 L23,23 L21,23 Z M25,24 L27,24 L27,26 L25,26 Z M17,27 L19,27 L19,29 L17,29 Z M23,30 L25,30 L25,32 L23,32 Z M15,33 L17,33 L17,35 L15,35 Z M21,26 L23,26 L23,28 L21,28 Z"/>
+    </clip-path>
+
+    <!-- Argentine flag, clipped to a round badge. -->
+    <path android:fillColor="#FFFFFF" android:pathData="M78,18 A19,19 0,1 0,78 56 A19,19 0,1 0,78 18 Z"/>
+    <clip-path android:name="argentina_flag_clip" android:pathData="M78,18 A19,19 0,1 0,78 56 A19,19 0,1 0,78 18 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M59,18 L97,18 L97,56 L59,56 Z"/>
+    <path android:fillColor="#75C8F0" android:pathData="M59,18 L97,18 L97,30 L59,30 Z M59,44 L97,44 L97,56 L59,56 Z"/>
+    <path android:fillColor="#F6BD39" android:pathData="M78,32 A5,5 0,1 0,78 42 A5,5 0,1 0,78 32 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M78,34 A3,3 0,1 0,78 40 A3,3 0,1 0,78 34 Z"/>
+    </clip-path>
+
+    <!-- Bidirectional arrows: the strongest and most legible part of the mark. -->
+    <path android:fillColor="#25E3F1" android:pathData="M28,64 L69,64 L69,58 L83,68 L69,78 L69,72 L28,72 Z"/>
+    <path android:fillColor="#FFB52E" android:pathData="M80,80 L39,80 L39,86 L25,76 L39,66 L39,72 L80,72 Z"/>
 </vector>
