@@ -68,8 +68,8 @@ public class OverlayService extends Service {
 
     // 18 languages, with Argentine Spanish as the default destination.
     private static final Language[] LANGUAGES = new Language[] {
-        new Language("English (United States)", "🇺🇸", "USA", "en-US", "en"),
-        new Language("Español argentino", "🇦🇷", "ARG", "es-AR", "es"),
+        new Language("Norteamericano (Estados Unidos)", "🇺🇸", "USA", "en-US", "en"),
+        new Language("Argentino (Argentina)", "🇦🇷", "ARG", "es-AR", "es"),
         new Language("Português (Brasil)", "🇧🇷", "BRA", "pt-BR", "pt"),
         new Language("Français", "🇫🇷", "FRA", "fr-FR", "fr"),
         new Language("Deutsch", "🇩🇪", "DEU", "de-DE", "de"),
