@@ -239,9 +239,10 @@ public class OverlayService extends Service {
         inputRow.setGravity(Gravity.CENTER_VERTICAL);
         inputRow.setPadding(dp(4), dp(3), dp(4), dp(3));
         inputRow.setBackground(rounded(Color.rgb(9, 29, 66)));
-        sourceFlag = makeText(sourceLanguage.flag, 30, Color.WHITE);
+        sourceFlag = makeText(sourceLanguage.flag, 38, Color.WHITE);
         sourceFlag.setGravity(Gravity.CENTER);
         sourceFlag.setBackground(circularIcon(Color.rgb(11, 49, 106)));
+        sourceFlag.setPadding(dp(1), dp(1), dp(1), dp(1));
         LinearLayout.LayoutParams sourceLp = new LinearLayout.LayoutParams(dp(54), dp(54));
         sourceLp.rightMargin = dp(6);
         inputRow.addView(sourceFlag, sourceLp);
@@ -307,9 +308,10 @@ public class OverlayService extends Service {
         LinearLayout.LayoutParams outputLp = new LinearLayout.LayoutParams(-1, -2);
         outputLp.topMargin = dp(7);
         content.addView(output, outputLp);
-        targetFlag = makeText(targetLanguage.flag, 30, Color.WHITE);
+        targetFlag = makeText(targetLanguage.flag, 38, Color.WHITE);
         targetFlag.setGravity(Gravity.CENTER);
         targetFlag.setBackground(circularIcon(Color.rgb(11, 49, 106)));
+        targetFlag.setPadding(dp(1), dp(1), dp(1), dp(1));
         LinearLayout.LayoutParams targetLp = new LinearLayout.LayoutParams(dp(50), dp(50));
         targetLp.rightMargin = dp(6);
         output.addView(targetFlag, targetLp);
@@ -429,7 +431,9 @@ public class OverlayService extends Service {
     private void updateLanguageLabels() {
         if (direction != null) direction.setText(sourceLanguage.label() + "  ➜  " + targetLanguage.label());
         if (sourceFlag != null) sourceFlag.setText(sourceLanguage.flag);
+        sourceFlag.setTextSize(38);
         if (targetFlag != null) targetFlag.setText(targetLanguage.flag);
+        targetFlag.setTextSize(38);
     }
 
     private void showLanguagePicker(boolean chooseSource) {
@@ -466,7 +470,7 @@ public class OverlayService extends Service {
 
     private void startVoiceRecognition() {
         if (Build.VERSION.SDK_INT >= 23 && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Autorizá el micrófono desde WordFlow.", Toast.LENGTH_LONG).show(); return;
+            Toast.makeText(this, "Autorizá el micrófono desde Word Flow.", Toast.LENGTH_LONG).show(); return;
         }
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             Toast.makeText(this, "Reconocimiento de voz no disponible.", Toast.LENGTH_SHORT).show(); return;
