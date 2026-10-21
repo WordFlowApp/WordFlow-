@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
                     Uri.parse("package:" + getPackageName()));
             startActivity(permissionIntent);
             Toast.makeText(this,
-                    "Activá Mostrar sobre otras aplicaciones y volvé a WordFlow 2.",
+                    "Activá Mostrar sobre otras aplicaciones y volvé a Word Flow.",
                     Toast.LENGTH_LONG).show();
             return;
         }
