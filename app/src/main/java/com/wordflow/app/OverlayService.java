@@ -12,6 +12,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -50,7 +53,8 @@ public class OverlayService extends Service {
     private WindowManager.LayoutParams params;
     private LinearLayout panel, directionRow;
     private EditText input;
-    private TextView result, direction, sourceFlag, targetFlag;
+    private TextView result, direction;
+    private FlagBadgeView sourceFlag, targetFlag;
     private TextToSpeech tts;
     private SpeechRecognizer recognizer;
     private boolean ttsReady, minimized;
@@ -140,6 +144,96 @@ public class OverlayService extends Service {
         d.setColor(color);
         d.setStroke(dp(2), Color.rgb(65, 183, 255));
         return d;
+    }
+
+
+    /**
+     * Circular, edge-to-edge flag badges for the two primary language directions.
+     * Other language options retain their native emoji flag as a fallback.
+     */
+    private final class FlagBadgeView extends TextView {
+        private final Paint flagPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private String flagCode;
+
+        FlagBadgeView(String flag) {
+            super(OverlayService.this);
+            flagCode = flag;
+            setGravity(Gravity.CENTER);
+            setBackground(circularIcon(Color.rgb(11, 49, 106)));
+            setPadding(0, 0, 0, 0);
+            setTextColor(Color.WHITE);
+            setTextSize(24);
+            setFlag(flag);
+        }
+
+        void setFlag(String flag) {
+            flagCode = flag;
+            boolean drawn = "🇺🇸".equals(flagCode) || "🇦🇷".equals(flagCode);
+            setText(drawn ? "" : flagCode);
+            invalidate();
+        }
+
+        private void paint(Canvas canvas, int color) {
+            flagPaint.setColor(color);
+            flagPaint.setStyle(Paint.Style.FILL);
+        }
+
+        @Override protected void onDraw(Canvas canvas) {
+            if (!"🇺🇸".equals(flagCode) && !"🇦🇷".equals(flagCode)) {
+                super.onDraw(canvas);
+                return;
+            }
+            float w = getWidth(), h = getHeight();
+            float cx = w / 2f, cy = h / 2f;
+            float radius = Math.min(w, h) / 2f - dp(2);
+            int save = canvas.save();
+            Path clip = new Path();
+            clip.addCircle(cx, cy, radius, Path.Direction.CW);
+            canvas.clipPath(clip);
+            if ("🇦🇷".equals(flagCode)) {
+                paint(canvas, Color.WHITE);
+                canvas.drawRect(cx-radius, cy-radius, cx+radius, cy+radius, flagPaint);
+                paint(canvas, Color.rgb(116, 192, 235));
+                canvas.drawRect(cx-radius, cy-radius, cx+radius, cy-radius/3f, flagPaint);
+                canvas.drawRect(cx-radius, cy+radius/3f, cx+radius, cy+radius, flagPaint);
+                paint(canvas, Color.rgb(247, 184, 43));
+                canvas.drawCircle(cx, cy, radius*0.22f, flagPaint);
+                paint(canvas, Color.rgb(247, 184, 43));
+                for (int i=0;i<12;i++) {
+                    double a = i*Math.PI/6.0;
+                    float x1 = cx+(float)Math.cos(a)*radius*0.24f;
+                    float y1 = cy+(float)Math.sin(a)*radius*0.24f;
+                    float x2 = cx+(float)Math.cos(a)*radius*0.34f;
+                    float y2 = cy+(float)Math.sin(a)*radius*0.34f;
+                    flagPaint.setStrokeWidth(dp(1.3f));
+                    canvas.drawLine(x1,y1,x2,y2,flagPaint);
+                }
+            } else {
+                paint(canvas, Color.WHITE);
+                canvas.drawRect(cx-radius, cy-radius, cx+radius, cy+radius, flagPaint);
+                paint(canvas, Color.rgb(191, 10, 48));
+                float stripe = radius*2f/13f;
+                for (int i=0;i<13;i+=2)
+                    canvas.drawRect(cx-radius, cy-radius+i*stripe, cx+radius, cy-radius+(i+1)*stripe, flagPaint);
+                paint(canvas, Color.rgb(10, 49, 97));
+                canvas.drawRect(cx-radius, cy-radius, cx+radius*0.15f, cy-radius+stripe*7f, flagPaint);
+                paint(canvas, Color.WHITE);
+                for (int row=0;row<5;row++) {
+                    for (int col=0;col<4;col++) {
+                        float x = cx-radius+radius*0.14f+col*radius*0.27f+(row%2)*radius*0.12f;
+                        float y = cy-radius+radius*0.13f+row*radius*0.27f;
+                        canvas.drawCircle(x,y,Math.max(dp(0.6f),radius*0.025f),flagPaint);
+                    }
+                }
+            }
+            canvas.restoreToCount(save);
+            // Bright cyan outline matches the app's approved visual identity.
+            paint(canvas, Color.rgb(65, 183, 255));
+            flagPaint.setStyle(Paint.Style.STROKE);
+            flagPaint.setStrokeWidth(dp(2));
+            canvas.drawCircle(cx, cy, radius, flagPaint);
+            flagPaint.setStyle(Paint.Style.FILL);
+        }
     }
 
     private TextView makeText(String value, int size, int color) {
@@ -239,10 +333,7 @@ public class OverlayService extends Service {
         inputRow.setGravity(Gravity.CENTER_VERTICAL);
         inputRow.setPadding(dp(4), dp(3), dp(4), dp(3));
         inputRow.setBackground(rounded(Color.rgb(9, 29, 66)));
-        sourceFlag = makeText(sourceLanguage.flag, 38, Color.WHITE);
-        sourceFlag.setGravity(Gravity.CENTER);
-        sourceFlag.setBackground(circularIcon(Color.rgb(11, 49, 106)));
-        sourceFlag.setPadding(dp(1), dp(1), dp(1), dp(1));
+        sourceFlag = new FlagBadgeView(sourceLanguage.flag);
         LinearLayout.LayoutParams sourceLp = new LinearLayout.LayoutParams(dp(54), dp(54));
         sourceLp.rightMargin = dp(6);
         inputRow.addView(sourceFlag, sourceLp);
@@ -308,10 +399,7 @@ public class OverlayService extends Service {
         LinearLayout.LayoutParams outputLp = new LinearLayout.LayoutParams(-1, -2);
         outputLp.topMargin = dp(7);
         content.addView(output, outputLp);
-        targetFlag = makeText(targetLanguage.flag, 38, Color.WHITE);
-        targetFlag.setGravity(Gravity.CENTER);
-        targetFlag.setBackground(circularIcon(Color.rgb(11, 49, 106)));
-        targetFlag.setPadding(dp(1), dp(1), dp(1), dp(1));
+        targetFlag = new FlagBadgeView(targetLanguage.flag);
         LinearLayout.LayoutParams targetLp = new LinearLayout.LayoutParams(dp(50), dp(50));
         targetLp.rightMargin = dp(6);
         output.addView(targetFlag, targetLp);
@@ -430,9 +518,9 @@ public class OverlayService extends Service {
 
     private void updateLanguageLabels() {
         if (direction != null) direction.setText(sourceLanguage.label() + "  ➜  " + targetLanguage.label());
-        if (sourceFlag != null) sourceFlag.setText(sourceLanguage.flag);
+        if (sourceFlag != null) sourceFlag.setFlag(sourceLanguage.flag);
         sourceFlag.setTextSize(38);
-        if (targetFlag != null) targetFlag.setText(targetLanguage.flag);
+        if (targetFlag != null) targetFlag.setFlag(targetLanguage.flag);
         targetFlag.setTextSize(38);
     }
 
