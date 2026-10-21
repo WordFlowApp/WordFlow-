@@ -261,7 +261,8 @@ public class OverlayService extends Service {
         inputRow.addView(input, new LinearLayout.LayoutParams(0, dp(44), 1));
 
         Button mic = makeButton("🎙");
-        styleRoundButton(mic, Color.rgb(14, 93, 170), 18);
+        styleRoundButton(mic, Color.rgb(14, 93, 170), 28);
+        mic.setContentDescription("Hablar");
         LinearLayout.LayoutParams micLp = new LinearLayout.LayoutParams(dp(44), dp(44));
         micLp.leftMargin = dp(6);
         inputRow.addView(mic, micLp);
@@ -273,7 +274,8 @@ public class OverlayService extends Service {
         actionsLp.topMargin = dp(7);
         content.addView(actions, actionsLp);
         Button swap = makeButton("⇄");
-        styleRoundButton(swap, Color.rgb(14, 58, 119), 23);
+        styleRoundButton(swap, Color.rgb(14, 58, 119), 31);
+        swap.setContentDescription("Invertir idiomas");
         GradientDrawable swapBg = circularIcon(Color.rgb(14, 58, 119));
         swap.setBackground(swapBg);
         LinearLayout.LayoutParams swapLp = new LinearLayout.LayoutParams(dp(48), dp(48));
@@ -282,7 +284,8 @@ public class OverlayService extends Service {
 
         Button translate = makeButton("✦  TRADUCIR");
         translate.setTextColor(Color.rgb(1, 28, 61));
-        translate.setTextSize(15);
+        translate.setTextSize(17);
+        translate.setContentDescription("Traducir");
         translate.setTypeface(null, Typeface.BOLD);
         GradientDrawable translateBg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
                 new int[]{Color.rgb(37, 240, 238), Color.rgb(0, 167, 226)});
@@ -313,12 +316,14 @@ public class OverlayService extends Service {
         output.addView(result, new LinearLayout.LayoutParams(0, -2, 1));
 
         Button speak = makeButton("🔊");
-        styleRoundButton(speak, Color.rgb(15, 69, 132), 18);
+        styleRoundButton(speak, Color.rgb(15, 69, 132), 27);
+        speak.setContentDescription("Escuchar traducción");
         LinearLayout.LayoutParams speakLp = new LinearLayout.LayoutParams(dp(42), dp(42));
         speakLp.leftMargin = dp(4);
         output.addView(speak, speakLp);
         Button copy = makeButton("▣");
-        styleRoundButton(copy, Color.rgb(15, 69, 132), 18);
+        styleRoundButton(copy, Color.rgb(15, 69, 132), 27);
+        copy.setContentDescription("Copiar traducción");
         LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(dp(42), dp(42));
         copyLp.leftMargin = dp(4);
         output.addView(copy, copyLp);
