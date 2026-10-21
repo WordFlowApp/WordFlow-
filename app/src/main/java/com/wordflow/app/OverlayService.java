@@ -688,6 +688,8 @@ public class OverlayService extends Service {
                     fallback = localizeArgentineSpanish(source, source);
                 } else if (to.localeTag.equals("en-US") && from.localeTag.equals("es-AR")) {
                     fallback = localizeNorthAmericanEnglish(source, source);
+                } else if (to.localeTag.equals("es-AR") && from.localeTag.equals("de-DE")) {
+                    fallback = localizeGermanToArgentineSpanish(source, source);
                 } else {
                     fallback = source;
                 }
