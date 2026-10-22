@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - wordflow2-clean-start
   pull_request:
     branches:
       - main
@@ -31,6 +32,43 @@ jobs:
       - name: Preparar Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Verificar catalogo de 18 idiomas
+        shell: bash
+        run: |
+          set -e
+          SOURCE='app/src/main/java/com/wordflow/app/OverlayService.java'
+          COUNT="$(grep -c 'new Language(' "$SOURCE")"
+          echo "Idiomas encontrados: $COUNT"
+          test "$COUNT" -eq 18
+          grep -q 'RecognizerIntent.EXTRA_LANGUAGE, sourceLanguage.localeTag' "$SOURCE"
+          grep -q 'Locale.forLanguageTag(targetLanguage.localeTag)' "$SOURCE"
+          ! grep -q 'northToArgentine' "$SOURCE"
+          echo 'Verificacion del catalogo y locales completada.'
+
+      - name: Verificar identidad e icono WordFlow Real
+        shell: bash
+        run: |
+          set -e
+          grep -q 'android:label="Word Flow"' app/src/main/AndroidManifest.xml
+          grep -q 'android:icon="@mipmap/ic_wordflow"' app/src/main/AndroidManifest.xml
+          test -s app/src/main/res/drawable/ic_wordflow_foreground.xml
+          test -s app/src/main/res/mipmap-anydpi-v26/ic_wordflow.xml
+          test -s app/src/main/res/values/wordflow_icon.xml
+          grep -q 'US flag tile' app/src/main/res/drawable/ic_wordflow_foreground.xml
+          grep -q 'Argentina flag tile' app/src/main/res/drawable/ic_wordflow_foreground.xml
+          ! find app/src/main/res/mipmap-* -name 'ic_wordflow.png' | grep -q .
+          grep -q "applicationId 'com.wordflow2.app.test'" app/build.gradle
+          grep -q "versionName '3.1'" app/build.gradle
+          grep -q 'android:name=".MainActivity"' app/src/main/AndroidManifest.xml
+          grep -q 'android:name=".OverlayService"' app/src/main/AndroidManifest.xml
+          grep -q 'android:launchMode="singleTop"' app/src/main/AndroidManifest.xml
+          ! grep -Eqi 'PresentationActivity|WelcomeActivity|SplashActivity|YellowButtonActivity' app/src/main/AndroidManifest.xml
+          grep -q 'openTranslator();' app/src/main/java/com/wordflow/app/MainActivity.java
+          grep -q 'startForegroundService(serviceIntent)' app/src/main/java/com/wordflow/app/MainActivity.java
+          ! find app/src/main/res -type f | grep -Eqi '/(layout|layout-land)/.*(presentation|welcome|splash)'
+          echo 'Flujo directo icono -> MainActivity -> OverlayService verificado.'
+          echo 'Identidad e icono de Word Flow 3.0 verificados.'
+
       - name: Compilar APK
         uses: gradle/gradle-build-action@v3
         with:
@@ -52,8 +90,15 @@ jobs:
           echo '=== VERIFICAR ARCHIVO ==='
           unzip -t "$APK"
           echo '=== VERIFICAR CODIGO DEX ==='
-          unzip -l "$APK" | grep -E 'classes[0-9]*\.dex'
-          unzip -Z1 "$APK" | grep -Eq '^classes([0-9]+)?\.dex$'
+          DEX_LIST="$(unzip -Z1 "$APK" | grep -E '^classes([0-9]+)?\.dex$')"
+          test -n "$DEX_LIST"
+          for DEX in $DEX_LIST; do
+            unzip -p "$APK" "$DEX" | strings
+          done > /tmp/wordflow-dex-strings.txt
+          grep -q 'Lcom/wordflow/app/MainActivity;' /tmp/wordflow-dex-strings.txt
+          grep -q 'Lcom/wordflow/app/OverlayService;' /tmp/wordflow-dex-strings.txt
+          grep -q 'localizeGermanToArgentineSpanish' /tmp/wordflow-dex-strings.txt
+          echo 'Clases de inicio, ventana flotante y respaldo aleman encontradas en el APK.'
           echo 'Verificacion del APK completada.'
 
       - name: Guardar APK

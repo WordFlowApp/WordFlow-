@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Word Flow launcher: US + Argentina, with bold two-way exchange arrows. -->
+    <path android:fillColor="#06142F" android:pathData="M0,0 L108,0 L108,108 L0,108 Z"/>
+    <path android:fillColor="#0A2B61" android:pathData="M54,6 A48,48 0,1 0,54 102 A48,48 0,1 0,54 6 Z"/>
+    <path android:fillColor="#16D7F3" android:pathData="M54,10 A44,44 0,1 0,54 98 A44,44 0,1 0,54 10 Z"/>
+    <path android:fillColor="#06204A" android:pathData="M54,13 A41,41 0,1 0,54 95 A41,41 0,1 0,54 13 Z"/>
+
+    <!-- US flag tile -->
+    <path android:fillColor="#FFFFFF" android:pathData="M14,24 Q14,19 20,19 L41,19 Q47,19 47,25 L47,43 Q47,49 41,49 L31,49 L23,56 L24,49 L20,49 Q14,49 14,43 Z"/>
+    <path android:fillColor="#D92745" android:pathData="M17,22 L44,22 L44,25 L17,25 Z M17,28 L44,28 L44,31 L17,31 Z M17,34 L44,34 L44,37 L17,37 Z M17,40 L44,40 L44,43 L17,43 Z M17,46 L40,46 L40,48 L17,48 Z"/>
+    <path android:fillColor="#123C86" android:pathData="M17,22 L29,22 L29,34 L17,34 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M19,24 L20,24 L20,25 L19,25 Z M23,24 L24,24 L24,25 L23,25 Z M27,24 L28,24 L28,25 L27,25 Z M21,27 L22,27 L22,28 L21,28 Z M25,27 L26,27 L26,28 L25,28 Z M19,30 L20,30 L20,31 L19,31 Z M23,30 L24,30 L24,31 L23,31 Z M27,30 L28,30 L28,31 L27,31 Z"/>
+
+    <!-- Argentina flag tile -->
+    <path android:fillColor="#FFFFFF" android:pathData="M66,19 L87,19 Q94,19 94,25 L94,43 Q94,49 87,49 L82,49 L83,56 L75,49 L66,49 Q60,49 60,43 L60,25 Q60,19 66,19 Z"/>
+    <path android:fillColor="#75C8F0" android:pathData="M63,22 L91,22 L91,30 L63,30 Z M63,38 L91,38 L91,46 L63,46 Z"/>
+    <path android:fillColor="#F6BD39" android:pathData="M77,31 A4.5,4.5 0,1 0,77 40 A4.5,4.5 0,1 0,77 31 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M77,33 A2.5,2.5 0,1 0,77 38 A2.5,2.5 0,1 0,77 33 Z"/>
+
+    <!-- Clear two-way arrows, matching the electric blue/turquoise app identity. -->
+    <path android:fillColor="#25E3F1" android:pathData="M35,62 L68,62 L68,56 L82,66 L68,76 L68,70 L35,70 Z"/>
+    <path android:fillColor="#FFB52E" android:pathData="M73,82 L40,82 L40,88 L26,78 L40,68 L40,74 L73,74 Z"/>
+</vector>

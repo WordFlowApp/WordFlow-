@@ -1,5 +1,15 @@
-
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Android 11+ package visibility for system speech services. -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -8,16 +18,21 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- Microphone is optional; manual typing must remain available on every device. -->
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_wordflow"
         android:roundIcon="@mipmap/ic_wordflow"
-        android:label="WordFlow"
+        android:label="Word Flow"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
+        <!-- Launcher bootstrap starts OverlayService directly; no presentation or yellow-button screen. -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
