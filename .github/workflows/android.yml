@@ -90,8 +90,16 @@ jobs:
           echo '=== VERIFICAR ARCHIVO ==='
           unzip -t "$APK"
           echo '=== VERIFICAR CODIGO DEX ==='
-          unzip -l "$APK" | grep -E 'classes[0-9]*\.dex'
-          DEX_LIST="$(unzip -Z1 "$APK" | grep -E '^classes([0-9]+)?\.dex
+          DEX_LIST="$(unzip -Z1 "$APK" | grep -E '^classes([0-9]+)?\.dex$')"
+          test -n "$DEX_LIST"
+          for DEX in $DEX_LIST; do
+            unzip -p "$APK" "$DEX" | strings
+          done > /tmp/wordflow-dex-strings.txt
+          grep -q 'Lcom/wordflow/app/MainActivity;' /tmp/wordflow-dex-strings.txt
+          grep -q 'Lcom/wordflow/app/OverlayService;' /tmp/wordflow-dex-strings.txt
+          grep -q 'localizeGermanToArgentineSpanish' /tmp/wordflow-dex-strings.txt
+          echo 'Clases de inicio, ventana flotante y respaldo aleman encontradas en el APK.'
+          echo 'Verificacion del APK completada.'
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
