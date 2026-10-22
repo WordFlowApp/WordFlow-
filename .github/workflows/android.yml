@@ -91,7 +91,25 @@ jobs:
           unzip -t "$APK"
           echo '=== VERIFICAR CODIGO DEX ==='
           unzip -l "$APK" | grep -E 'classes[0-9]*\.dex'
-          unzip -Z1 "$APK" | grep -Eq '^classes([0-9]+)?\.dex$'
+          DEX_LIST="$(unzip -Z1 "$APK" | grep -E '^classes([0-9]+)?\.dex
+
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: WordFlow-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+)"
+          test -n "$DEX_LIST"
+          # Verify app classes across all DEX files (Android may place app code in classes2.dex).
+          for DEX in $DEX_LIST; do
+            unzip -p "$APK" "$DEX" | strings
+          done > /tmp/wordflow-dex-strings.txt
+          grep -q 'Lcom/wordflow/app/MainActivity;' /tmp/wordflow-dex-strings.txt
+          grep -q 'Lcom/wordflow/app/OverlayService;' /tmp/wordflow-dex-strings.txt
+          grep -q 'localizeGermanToArgentineSpanish' /tmp/wordflow-dex-strings.txt
+          echo 'Clases de inicio, ventana flotante y respaldo alemán encontradas en el APK.'
           echo 'Verificacion del APK completada.'
 
       - name: Guardar APK
