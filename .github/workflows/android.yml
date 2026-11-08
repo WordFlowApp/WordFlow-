@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - subs-android-overlay
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
