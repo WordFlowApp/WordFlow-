@@ -29,7 +29,6 @@ public class SubsOverlayService extends Service {
     private float downX, downY;
     private int startX, startY;
     private boolean moved;
-    private boolean expanded = true;
 
     private int dp(float value) {
         return (int)(value * getResources().getDisplayMetrics().density + 0.5f);
@@ -49,15 +48,22 @@ public class SubsOverlayService extends Service {
     private Notification buildNotification() {
         NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26) {
-            nm.createNotificationChannel(new NotificationChannel(CHANNEL, "SUBS icono flotante",
-                    NotificationManager.IMPORTANCE_LOW));
+            nm.createNotificationChannel(new NotificationChannel(CHANNEL, "SUBS icono flotante", NotificationManager.IMPORTANCE_LOW));
         }
         Notification.Builder builder = Build.VERSION.SDK_INT >= 26
                 ? new Notification.Builder(this, CHANNEL) : new Notification.Builder(this);
         return builder.setSmallIcon(android.R.drawable.ic_menu_info_details)
                 .setContentTitle("SUBS está activo")
-                .setContentText("El icono flotante está disponible")
+                .setContentText("Tocá SUBS para completar campos permitidos. Mantené presionado para ocultarlo.")
                 .setOngoing(true).build();
+    }
+
+    private GradientDrawable background() {
+        GradientDrawable shape = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{0xFFFF7777, 0xFFED001B, 0xFFB00012});
+        shape.setCornerRadius(dp(22));
+        shape.setStroke(dp(1), 0xFFFFD0C8);
+        return shape;
     }
 
     private void attachBubble() {
@@ -65,20 +71,17 @@ public class SubsOverlayService extends Service {
         bubble = new TextView(this);
         bubble.setText("SUBS");
         bubble.setTextColor(Color.WHITE);
-        bubble.setTextSize(13);
+        bubble.setTextSize(18);
         bubble.setTypeface(Typeface.create("sans-serif-rounded", Typeface.BOLD));
         bubble.setGravity(Gravity.CENTER);
-        bubble.setElevation(dp(8));
-        GradientDrawable shape = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                new int[]{0xFFFF5555, 0xFFED001B, 0xFFB00012});
-        shape.setCornerRadius(dp(20));
-        shape.setStroke(dp(1), 0xFFFFB2A8);
-        bubble.setBackground(shape);
+        bubble.setPadding(dp(7), 0, dp(7), 0);
+        bubble.setElevation(dp(9));
+        bubble.setBackground(background());
 
         int type = Build.VERSION.SDK_INT >= 26
                 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                 : WindowManager.LayoutParams.TYPE_PHONE;
-        params = new WindowManager.LayoutParams(dp(66), dp(52), type,
+        params = new WindowManager.LayoutParams(dp(104), dp(62), type,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
@@ -107,26 +110,14 @@ public class SubsOverlayService extends Service {
                     if (moved) {
                         getSharedPreferences(PREFS, MODE_PRIVATE).edit()
                                 .putInt("x", params.x).putInt("y", params.y).apply();
-                    } else if (event.getEventTime() - event.getDownTime() > 500) {
+                    } else if (event.getEventTime() - event.getDownTime() > 600) {
+                        Toast.makeText(this, "SUBS ocultado. Podés volver a mostrarlo desde la aplicación.", Toast.LENGTH_LONG).show();
+                        stopSelf();
+                    } else {
                         Intent fill = new Intent(SubsDirectFillService.ACTION_FILL);
                         fill.setPackage(getPackageName());
                         sendBroadcast(fill);
                         Toast.makeText(this, "SUBS: buscando campos básicos permitidos…", Toast.LENGTH_SHORT).show();
-                    } else {
-                        // Toque corto: alterna entre el acceso SUBS y su estado compacto.
-                        expanded = !expanded;
-                        bubble.setText(expanded ? "SUBS" : "S");
-                        params.width = dp(expanded ? 66 : 48);
-                        params.height = dp(expanded ? 52 : 48);
-                        GradientDrawable stateShape = new GradientDrawable(
-                                GradientDrawable.Orientation.TL_BR,
-                                expanded
-                                        ? new int[]{0xFFFF5555, 0xFFED001B, 0xFFB00012}
-                                        : new int[]{0xFFED001B, 0xFFB00012});
-                        stateShape.setCornerRadius(dp(expanded ? 20 : 24));
-                        stateShape.setStroke(dp(1), 0xFFFFB2A8);
-                        bubble.setBackground(stateShape);
-                        try { windowManager.updateViewLayout(bubble, params); } catch (Exception ignored) { }
                     }
                     return true;
                 case MotionEvent.ACTION_CANCEL:
@@ -137,13 +128,13 @@ public class SubsOverlayService extends Service {
         try {
             windowManager.addView(bubble, params);
         } catch (Exception e) {
-            Toast.makeText(this, "No se pudo mostrar el icono SUBS. Revisá el permiso de superposición.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "No se pudo mostrar SUBS. Revisá el permiso de superposición.", Toast.LENGTH_LONG).show();
             stopSelf();
         }
     }
 
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     @Override public void onDestroy() {
