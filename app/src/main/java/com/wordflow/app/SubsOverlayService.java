@@ -107,10 +107,10 @@ public class SubsOverlayService extends Service {
                         getSharedPreferences(PREFS, MODE_PRIVATE).edit()
                                 .putInt("x", params.x).putInt("y", params.y).apply();
                     } else {
-                        Intent open = new Intent(this, MainActivity.class);
-                        open.putExtra("from_subs_bubble", true);
-                        open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                        startActivity(open);
+                        Intent fill = new Intent(SubsDirectFillService.ACTION_FILL);
+                        fill.setPackage(getPackageName());
+                        sendBroadcast(fill);
+                        Toast.makeText(this, "SUBS: buscando campos básicos permitidos…", Toast.LENGTH_SHORT).show();
                     }
                     return true;
                 case MotionEvent.ACTION_CANCEL:
