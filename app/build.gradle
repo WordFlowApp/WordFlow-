@@ -5,16 +5,13 @@ plugins {
 android {
     namespace 'com.wordflow.app'
     compileSdk 35
-
     defaultConfig {
-        // Keep the existing installed package so this APK updates the same app.
-        applicationId 'com.wordflow2.app.test'
-        versionCode 4
-        versionName '3.1'
+        applicationId 'com.subs.app'
         minSdk 26
         targetSdk 35
+        versionCode 1
+        versionName '1.0'
     }
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
