@@ -1,110 +1,38 @@
-name: WordFlow Android APK
+name: SUBS Android APK
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - main
-      - wordflow2-clean-start
-  pull_request:
-    branches:
-      - main
+      - subs-android-overlay
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Compilar WordFlow
+    name: Build SUBS APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
     steps:
-      - name: Descargar codigo
-        uses: actions/checkout@v4
-
-      - name: Configurar Java
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: Preparar Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Verificar catalogo de 18 idiomas
-        shell: bash
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build debug APK
+        run: gradle assembleDebug --stacktrace
+      - name: Verify APK
         run: |
           set -e
-          SOURCE='app/src/main/java/com/wordflow/app/OverlayService.java'
-          COUNT="$(grep -c 'new Language(' "$SOURCE")"
-          echo "Idiomas encontrados: $COUNT"
-          test "$COUNT" -eq 18
-          grep -q 'RecognizerIntent.EXTRA_LANGUAGE, sourceLanguage.localeTag' "$SOURCE"
-          grep -q 'Locale.forLanguageTag(targetLanguage.localeTag)' "$SOURCE"
-          ! grep -q 'northToArgentine' "$SOURCE"
-          echo 'Verificacion del catalogo y locales completada.'
-
-      - name: Verificar identidad e icono WordFlow Real
-        shell: bash
-        run: |
-          set -e
-          grep -q 'android:label="Word Flow"' app/src/main/AndroidManifest.xml
-          grep -q 'android:icon="@mipmap/ic_wordflow"' app/src/main/AndroidManifest.xml
-          test -s app/src/main/res/drawable/ic_wordflow_foreground.xml
-          test -s app/src/main/res/mipmap-anydpi-v26/ic_wordflow.xml
-          test -s app/src/main/res/values/wordflow_icon.xml
-          grep -q 'US flag tile' app/src/main/res/drawable/ic_wordflow_foreground.xml
-          grep -q 'Argentina flag tile' app/src/main/res/drawable/ic_wordflow_foreground.xml
-          ! find app/src/main/res/mipmap-* -name 'ic_wordflow.png' | grep -q .
-          grep -q "applicationId 'com.wordflow2.app.test'" app/build.gradle
-          grep -q "versionName '3.1'" app/build.gradle
-          grep -q 'android:name=".MainActivity"' app/src/main/AndroidManifest.xml
-          grep -q 'android:name=".OverlayService"' app/src/main/AndroidManifest.xml
-          grep -q 'android:launchMode="singleTop"' app/src/main/AndroidManifest.xml
-          ! grep -Eqi 'PresentationActivity|WelcomeActivity|SplashActivity|YellowButtonActivity' app/src/main/AndroidManifest.xml
-          grep -q 'openTranslator();' app/src/main/java/com/wordflow/app/MainActivity.java
-          grep -q 'startForegroundService(serviceIntent)' app/src/main/java/com/wordflow/app/MainActivity.java
-          ! find app/src/main/res -type f | grep -Eqi '/(layout|layout-land)/.*(presentation|welcome|splash)'
-          echo 'Flujo directo icono -> MainActivity -> OverlayService verificado.'
-          echo 'Identidad e icono de Word Flow 3.0 verificados.'
-
-      - name: Compilar APK
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-version: '8.9'
-          arguments: assembleDebug --stacktrace
-
-      - name: Verificar APK y codigo
-        shell: bash
-        run: |
-          set -e
-          APK='app/build/outputs/apk/debug/app-debug.apk'
-          if [ ! -f "$APK" ]; then
-            echo 'ERROR: No se encontro el APK.'
-            find app/build/outputs -type f || true
-            exit 1
-          fi
-          echo '=== TAMANO DEL APK ==='
-          stat -c '%s bytes' "$APK"
-          echo '=== VERIFICAR ARCHIVO ==='
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
           unzip -t "$APK"
-          echo '=== VERIFICAR CODIGO DEX ==='
-          DEX_LIST="$(unzip -Z1 "$APK" | grep -E '^classes([0-9]+)?\.dex$')"
-          test -n "$DEX_LIST"
-          for DEX in $DEX_LIST; do
-            unzip -p "$APK" "$DEX" | strings
-          done > /tmp/wordflow-dex-strings.txt
-          grep -q 'Lcom/wordflow/app/MainActivity;' /tmp/wordflow-dex-strings.txt
-          grep -q 'Lcom/wordflow/app/OverlayService;' /tmp/wordflow-dex-strings.txt
-          grep -q 'localizeGermanToArgentineSpanish' /tmp/wordflow-dex-strings.txt
-          echo 'Clases de inicio, ventana flotante y respaldo aleman encontradas en el APK.'
-          echo 'Verificacion del APK completada.'
-
-      - name: Guardar APK
-        uses: actions/upload-artifact@v4
+          echo "SUBS APK verified"
+      - uses: actions/upload-artifact@v4
         with:
-          name: WordFlow-APK
+          name: SUBS-Android-APK
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 14
