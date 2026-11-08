@@ -57,13 +57,17 @@ public class SubsAutofillService extends AutofillService {
     }
 
     private boolean isSensitive(AssistStructure.ViewNode node) {
-        if (node.isPassword()) return true;
+        int inputType = node.getInputType();
+        int variation = inputType & (android.text.InputType.TYPE_MASK_CLASS | android.text.InputType.TYPE_MASK_VARIATION);
+        if (variation == (android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD)
+                || variation == (android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD)
+                || variation == (android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD)) return true;
         String all = ((String.valueOf(node.getHint()) + " " + String.valueOf(node.getIdEntry()) + " "
                 + String.valueOf(node.getAutofillHints()) + " " + String.valueOf(node.getText()))
                 .toLowerCase(Locale.ROOT));
         String[] blocked = {"password","passwd","contraseña","clave","pin","cvv","cvc","otp",
                 "verification","verify code","security code","token","credit-card","credit_card",
-                "card-number","card_number","iban","account-number","routing"};
+                "card-number","card_number","iban","account-number","routing","username","user_name","login"};
         for (String term : blocked) if (all.contains(term)) return true;
         return false;
     }
