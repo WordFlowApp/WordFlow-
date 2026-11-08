@@ -1,0 +1,3 @@
+<resources>
+    <string name="subs_accessibility_description">SUBS solo revisa los metadatos de campos editables visibles para identificar nombre, contacto y domicilio. No registra pulsaciones, no toma capturas, no lee contraseñas y no envía datos a servidores. El usuario activa el servicio y toca el icono SUBS para completar campos permitidos.</string>
+</resources>
