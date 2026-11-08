@@ -107,8 +107,13 @@ public class SubsOverlayService extends Service {
                     if (moved) {
                         getSharedPreferences(PREFS, MODE_PRIVATE).edit()
                                 .putInt("x", params.x).putInt("y", params.y).apply();
+                    } else if (event.getEventTime() - event.getDownTime() > 500) {
+                        Intent fill = new Intent(SubsDirectFillService.ACTION_FILL);
+                        fill.setPackage(getPackageName());
+                        sendBroadcast(fill);
+                        Toast.makeText(this, "SUBS: buscando campos básicos permitidos…", Toast.LENGTH_SHORT).show();
                     } else {
-                        // Alterna entre el acceso SUBS y su estado compacto.
+                        // Toque corto: alterna entre el acceso SUBS y su estado compacto.
                         expanded = !expanded;
                         bubble.setText(expanded ? "SUBS" : "S");
                         params.width = dp(expanded ? 66 : 48);
