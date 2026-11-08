@@ -11,25 +11,21 @@
         android:label="SUBS"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
-        <service android:name=".SubsOverlayService" android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="User-initiated persistent floating SUBS shortcut icon"/>
+        <service android:name=".SubsOverlayService" android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-initiated persistent floating SUBS shortcut icon"/>
         </service>
-        <service android:name=".SubsAutofillService"
-            android:label="SUBS"
-            android:permission="android.permission.BIND_AUTOFILL_SERVICE"
+        <service android:name=".SubsAutofillService" android:label="SUBS" android:permission="android.permission.BIND_AUTOFILL_SERVICE" android:exported="true">
+            <intent-filter><action android:name="android.service.autofill.AutofillService"/></intent-filter>
+            <meta-data android:name="android.autofill" android:resource="@xml/subs_autofill_service"/>
+        </service>
+        <service android:name=".SubsDirectFillService"
+            android:label="SUBS · Completar campos permitidos"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.service.autofill.AutofillService"/>
-            </intent-filter>
-            <meta-data android:name="android.autofill"
-                android:resource="@xml/subs_autofill_service"/>
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService"/></intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/subs_accessibility_service"/>
         </service>
     </application>
 </manifest>
