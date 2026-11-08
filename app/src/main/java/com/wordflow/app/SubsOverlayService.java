@@ -29,6 +29,7 @@ public class SubsOverlayService extends Service {
     private float downX, downY;
     private int startX, startY;
     private boolean moved;
+    private boolean expanded = true;
 
     private int dp(float value) {
         return (int)(value * getResources().getDisplayMetrics().density + 0.5f);
@@ -107,10 +108,20 @@ public class SubsOverlayService extends Service {
                         getSharedPreferences(PREFS, MODE_PRIVATE).edit()
                                 .putInt("x", params.x).putInt("y", params.y).apply();
                     } else {
-                        Intent fill = new Intent(SubsDirectFillService.ACTION_FILL);
-                        fill.setPackage(getPackageName());
-                        sendBroadcast(fill);
-                        Toast.makeText(this, "SUBS: buscando campos básicos permitidos…", Toast.LENGTH_SHORT).show();
+                        // Alterna entre el acceso SUBS y su estado compacto.
+                        expanded = !expanded;
+                        bubble.setText(expanded ? "SUBS" : "S");
+                        params.width = dp(expanded ? 66 : 48);
+                        params.height = dp(expanded ? 52 : 48);
+                        GradientDrawable stateShape = new GradientDrawable(
+                                GradientDrawable.Orientation.TL_BR,
+                                expanded
+                                        ? new int[]{0xFFFF5555, 0xFFED001B, 0xFFB00012}
+                                        : new int[]{0xFFED001B, 0xFFB00012});
+                        stateShape.setCornerRadius(dp(expanded ? 20 : 24));
+                        stateShape.setStroke(dp(1), 0xFFFFB2A8);
+                        bubble.setBackground(stateShape);
+                        try { windowManager.updateViewLayout(bubble, params); } catch (Exception ignored) { }
                     }
                     return true;
                 case MotionEvent.ACTION_CANCEL:
